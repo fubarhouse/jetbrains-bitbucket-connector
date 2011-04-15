@@ -1,0 +1,21 @@
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <name>Bitbucket</name>
+  <id>org.bitbucket.connector</id>
+  <!--<vendor logo="/general/ijLogo.png">JetBrains</vendor>-->
+  <description>Bitbucket integration</description>
+
+  <depends>com.intellij.modules.lang</depends>
+  <depends>hg4idea</depends>
+  <!--<depends>com.intellij.tasks</depends>-->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <checkoutProvider implementation="org.bitbucket.connectors.jetbrains.BitbucketCheckoutProvider"/>
+    <applicationService serviceInterface="org.bitbucket.connectors.jetbrains.BitbucketSettings"
+                        serviceImplementation="org.bitbucket.connectors.jetbrains.BitbucketSettings"/>
+    <applicationConfigurable instance="org.bitbucket.connectors.jetbrains.ui.BitbucketSettingsConfigurable"/>
+    <checkoutCompletedListener implementation="org.bitbucket.connectors.jetbrains.BitbucketCheckoutListener" order="after PlatformProjectCheckoutListener"/>
+  </extensions>
+  <actions>
+  </actions>
+</idea-plugin>
