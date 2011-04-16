@@ -183,8 +183,7 @@ public class BitbucketUtil {
         RepositoryInfo repository = createBitbucketRepository(settings.getLogin(), settings.getPassword(), name, true);
         if (repository != null) {
             String repositoryUrl = repository.getCheckoutUrl(false);
-            repositoryUrl = addCredentials(repositoryUrl);
-            HgCommandResult result = new HgPushCommand(project, root, repositoryUrl).execute();
+            HgCommandResult result = new HgPushCommand(project, root, addCredentials(repositoryUrl)).execute();
             try {
                 setRepositoryDefaultPath(root, repositoryUrl);
             } catch (IOException e) {
@@ -215,8 +214,10 @@ public class BitbucketUtil {
                     continue;
                 }
 
-                if (paths && !"default".equals(getKey(line))) {
-                    pathLines.add(line);
+                if (paths) {
+                    if (!"default".equals(getKey(line))) {
+                        pathLines.add(line);
+                    }
                 } else {
                     lines.add(line);
                 }
