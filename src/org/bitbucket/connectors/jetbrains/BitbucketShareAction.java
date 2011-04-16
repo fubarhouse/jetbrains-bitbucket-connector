@@ -7,21 +7,17 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Icons;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketShareDialog;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgUtil;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.HgAddCommand;
-import org.zmlx.hg4idea.command.HgCommandException;
 import org.zmlx.hg4idea.command.HgCommitCommand;
 import org.zmlx.hg4idea.command.HgInitCommand;
 
@@ -35,7 +31,7 @@ import java.util.*;
 public class BitbucketShareAction extends DumbAwareAction {
 
     public BitbucketShareAction() {
-        super("Share on Bitbucket", "Share on Bitbucket", Icons.ADD_ICON);
+        super("Share on Bitbucket", "Share on Bitbucket", BitbucketUtil.ICON);
     }
 
     public void update(AnActionEvent e) {

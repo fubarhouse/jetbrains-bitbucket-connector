@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Icons;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.NameValuePair;
@@ -25,6 +26,7 @@ import org.zmlx.hg4idea.command.HgCommandResult;
 import org.zmlx.hg4idea.command.HgPushCommand;
 import org.zmlx.hg4idea.command.HgUrl;
 
+import javax.swing.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,6 +36,7 @@ import java.util.Map;
 public class BitbucketUtil {
 
     public static final String BITBUCKET = "bitbucket.org";
+    public static final Icon ICON = Icons.WEB_ICON;
 
     private static HttpClient getClient(String login, String password) {
         HttpClient client = new HttpClient();

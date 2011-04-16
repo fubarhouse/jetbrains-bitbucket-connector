@@ -2,9 +2,8 @@ package org.bitbucket.connectors.jetbrains.ui;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.Icons;
 import org.bitbucket.connectors.jetbrains.BitbucketSettings;
+import org.bitbucket.connectors.jetbrains.BitbucketUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -15,7 +14,7 @@ import javax.swing.*;
  * Time: 2:01:11 PM
  */
 public class BitbucketSettingsConfigurable implements SearchableConfigurable {
-    public static final Icon ICON = Icons.CHECK_ICON;//IconLoader.getIcon("/icons/bitbucket.png");
+
     private BitbucketSettingsPanel mySettingsPane;
     private final BitbucketSettings mySettings;
 
@@ -28,7 +27,7 @@ public class BitbucketSettingsConfigurable implements SearchableConfigurable {
     }
 
     public Icon getIcon() {
-      return ICON;
+      return BitbucketUtil.ICON;
     }
 
     public String getHelpTopic() {
