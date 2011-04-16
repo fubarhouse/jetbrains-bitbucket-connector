@@ -26,10 +26,15 @@ public class RepositoryInfo {
     }
 
     public String getCheckoutUrl() {
+        String owner = getOwner();
+        return getCheckoutUrl(BitbucketSettings.getInstance().getLogin().equals(owner));
+    }
+
+    public String getCheckoutUrl(boolean ssh) {
         String name = getSlug();
         String owner = getOwner();
 
-        if (BitbucketSettings.getInstance().getLogin().equals(owner)) {
+        if (ssh) {
             return "ssh://hg@" + BitbucketUtil.BITBUCKET + "/" + owner + "/" + name;
         } else {
             return "https://" + BitbucketUtil.BITBUCKET + "/" + owner + "/" + name;

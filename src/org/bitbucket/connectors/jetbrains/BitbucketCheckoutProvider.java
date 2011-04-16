@@ -87,17 +87,7 @@ public class BitbucketCheckoutProvider implements CheckoutProvider {
         }
 
         String repositoryUrl = repository.getCheckoutUrl();
-
-        HgUrl url;
-        try {
-            url = new HgUrl(repositoryUrl);
-            BitbucketSettings settings = BitbucketSettings.getInstance();
-            url.setUsername(settings.getLogin());
-            url.setPassword(settings.getPassword());
-            repositoryUrl = url.asString();
-        } catch (Exception e) {
-            return;
-        }
+        repositoryUrl = BitbucketUtil.addCredentials(repositoryUrl);
 
         checkout(project, repositoryUrl, folder.getPath(), listener);
     }

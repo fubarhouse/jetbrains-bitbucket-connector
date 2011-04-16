@@ -8,20 +8,28 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.PostMethod;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketLoginDialog;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.command.HgCommandResult;
+import org.zmlx.hg4idea.command.HgPushCommand;
+import org.zmlx.hg4idea.command.HgUrl;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BitbucketUtil {
 
@@ -36,11 +44,28 @@ public class BitbucketUtil {
         return client;
     }
 
-    public static HttpMethod request(String username, String password, String url) throws IOException {
+    public static Element request(String username, String password, String url, boolean post, Map<String, String> params) throws IOException, JDOMException {
+        url = "https://api." + BITBUCKET + "/1.0" + url + "?format=xml";
+
         HttpClient client = getClient(username, password);
-        GetMethod get = new GetMethod("https://api." + BITBUCKET + "/1.0" + url + "?format=xml");
-        client.executeMethod(get);
-        return get;
+        HttpMethod res;
+        if (post) {
+            res = new PostMethod(url);
+            if (params != null) {
+                List<NameValuePair> pairs = new ArrayList<NameValuePair>();
+                for (Map.Entry<String, String> entry: params.entrySet()) {
+                    pairs.add(new NameValuePair(entry.getKey(), entry.getValue()));
+                }
+                NameValuePair[] arr = new NameValuePair[pairs.size()];
+                pairs.toArray(arr);
+                ((PostMethod) res).setRequestBody(arr);
+            }
+        } else {
+            res = new GetMethod(url);
+        }
+        client.executeMethod(res);
+        InputStream stream = res.getResponseBodyAsStream();
+        return new SAXBuilder(false).build(stream).getRootElement();
     }
 
     public static List<RepositoryInfo> getRepositories(Project project, final boolean ownOnly) {
@@ -80,9 +105,7 @@ public class BitbucketUtil {
     private static List<RepositoryInfo> getRepositories(String username, String password, boolean ownOnly) {
         List<RepositoryInfo> repositories = new ArrayList<RepositoryInfo>();
         try {
-            HttpMethod method = request(username, password, "/user/repositories/");
-
-            final Element element = new SAXBuilder(false).build(method.getResponseBodyAsStream()).getRootElement();
+            Element element = request(username, password, "/user/repositories/", false, null);
             for (Element res : (List<Element>) element.getChildren("resource")) {
                 RepositoryInfo info = new RepositoryInfo(res);
                 if (!ownOnly || info.getOwner().equals(username)) {
@@ -128,9 +151,7 @@ public class BitbucketUtil {
 
     public static boolean testConnection(final String login, final String password) {
         try {
-            HttpMethod method = request(login, password, "/users/" + login);
-            InputStream stream = method.getResponseBodyAsStream();
-            Element element = new SAXBuilder(false).build(stream).getRootElement();
+            Element element = request(login, password, "/users/" + login, false, null);
             return "response".equals(element.getName()) && element.getChild("repositories") != null;
         }
         catch (Exception e) {
@@ -152,5 +173,102 @@ public class BitbucketUtil {
             }
         });
         return result.get();
+    }
+
+    public static void share(Project project, VirtualFile root, String name, String description) {
+        BitbucketSettings settings = BitbucketSettings.getInstance();
+        RepositoryInfo repository = createBitbucketRepository(settings.getLogin(), settings.getPassword(), name, true);
+        if (repository != null) {
+            String repositoryUrl = repository.getCheckoutUrl(false);
+            repositoryUrl = addCredentials(repositoryUrl);
+            HgCommandResult result = new HgPushCommand(project, root, repositoryUrl).execute();
+            try {
+                setRepositoryDefaultPath(root, repositoryUrl);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private static void setRepositoryDefaultPath(VirtualFile root, String url) throws IOException {
+        File hgrc = new File(new File(root.getPath(), ".hg"), "hgrc");
+        if (!hgrc.exists()) {
+            hgrc.createNewFile();
+        }
+
+        List<String> lines = new ArrayList<String>();
+        List<String> pathLines = new ArrayList<String>();
+        BufferedReader reader = new BufferedReader(new FileReader(hgrc));
+        try {
+            String line;
+            boolean paths = false;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (line.startsWith("[")) {
+                    paths = "[paths]".equals(line);
+                    if (!paths) {
+                        lines.add(line);
+                    }
+                    continue;
+                }
+
+                if (paths && !"default".equals(getKey(line))) {
+                    pathLines.add(line);
+                } else {
+                    lines.add(line);
+                }
+            }
+        } finally {
+            reader.close();
+        }
+
+        PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(hgrc, false)));
+        try {
+            writer.println("[paths]");
+            writer.println("default=" + url);
+
+            for (String line: pathLines) {
+                writer.println(line);
+            }
+
+            for (String line: lines) {
+                writer.println(line);
+            }
+        } finally {
+            writer.close();
+        }
+    }
+
+    private static String getKey(String s) {
+        String[] parts = s.split("=");
+        return parts.length > 0 ? parts[0].trim() : null;
+    }
+
+    private static RepositoryInfo createBitbucketRepository(String login, String password, String name, boolean isPrivate) {
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("name", name);
+        if (isPrivate) {
+            params.put("is_private", "True");
+        }
+
+        try {
+            Element element = request(login, password, "/repositories/", true, params);
+            return new RepositoryInfo(element);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static String addCredentials(String repositoryUrl) {
+        HgUrl url;
+        try {
+            url = new HgUrl(repositoryUrl);
+            BitbucketSettings settings = BitbucketSettings.getInstance();
+            url.setUsername(settings.getLogin());
+            url.setPassword(settings.getPassword());
+            return url.asString();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

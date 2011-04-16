@@ -17,5 +17,8 @@
     <checkoutCompletedListener implementation="org.bitbucket.connectors.jetbrains.BitbucketCheckoutListener" order="after PlatformProjectCheckoutListener"/>
   </extensions>
   <actions>
+      <action id="Bitbucket.Share" class="org.bitbucket.connectors.jetbrains.BitbucketShareAction">
+        <add-to-group group-id="Vcs.Import"/>
+      </action>
   </actions>
 </idea-plugin>
