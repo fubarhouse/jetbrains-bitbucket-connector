@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -178,18 +179,36 @@ public class BitbucketUtil {
         return result.get();
     }
 
-    public static void share(Project project, VirtualFile root, String name, String description) {
-        BitbucketSettings settings = BitbucketSettings.getInstance();
-        RepositoryInfo repository = createBitbucketRepository(settings.getLogin(), settings.getPassword(), name, true);
-        if (repository != null) {
-            String repositoryUrl = repository.getCheckoutUrl(false);
-            HgCommandResult result = new HgPushCommand(project, root, addCredentials(repositoryUrl)).execute();
-            try {
-                setRepositoryDefaultPath(root, repositoryUrl);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+    public static void executeWithProgressSynchronously(final Project project, final Runnable runnable) throws CancelledException {
+        ProgressManager.getInstance().run(new Task.Modal(project, "Access to Bitbucket", true) {
+            public void run(@NotNull ProgressIndicator indicator) {
+                runnable.run();
             }
-        }
+
+            @Override
+            public void onCancel() {
+                throw new CancelledException();
+            }
+        });
+    }
+
+    public static void share(final Project project, final VirtualFile root, final String name, final String description) {
+        executeWithProgressSynchronously(project, new Runnable() {
+            public void run() {
+                BitbucketSettings settings = BitbucketSettings.getInstance();
+                RepositoryInfo repository = createBitbucketRepository(settings.getLogin(), settings.getPassword(), name, description, true);
+                if (repository != null) {
+                    String repositoryUrl = repository.getCheckoutUrl(false);
+                    try {
+                        HgCommandResult result = new HgPushCommand(project, root, addCredentials(repositoryUrl)).execute();
+                        setRepositoryDefaultPath(root, repositoryUrl);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        });
+        Messages.showInfoMessage(project, "The project has been shared on the Bitbucket.", "Bitbucket share project");
     }
 
     private static void setRepositoryDefaultPath(VirtualFile root, String url) throws IOException {
@@ -248,9 +267,10 @@ public class BitbucketUtil {
         return parts.length > 0 ? parts[0].trim() : null;
     }
 
-    private static RepositoryInfo createBitbucketRepository(String login, String password, String name, boolean isPrivate) {
+    private static RepositoryInfo createBitbucketRepository(String login, String password, String name, String description, boolean isPrivate) {
         Map<String, String> params = new HashMap<String, String>();
         params.put("name", name);
+        params.put("description", description);
         if (isPrivate) {
             params.put("is_private", "True");
         }
