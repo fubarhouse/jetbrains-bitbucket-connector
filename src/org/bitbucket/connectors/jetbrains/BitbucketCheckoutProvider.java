@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.HgCloneCommand;
 import org.zmlx.hg4idea.command.HgCommandResult;
-import org.zmlx.hg4idea.command.HgUrl;
 import org.zmlx.hg4idea.provider.HgCheckoutProvider;
 
 import java.io.File;
@@ -32,6 +31,9 @@ import java.util.List;
 public class BitbucketCheckoutProvider implements CheckoutProvider {
     public void doCheckout(@NotNull Project project, @Nullable Listener listener) {
         List<RepositoryInfo> availableRepos = BitbucketUtil.getRepositories(project, false);
+        if (availableRepos == null) {
+            return;
+        }
 
         if (availableRepos.isEmpty()) {
             Messages.showErrorDialog(project, "You don't have any repository available on Bitbucket.\nOnly your own or shared repositories can be cloned.", "Cannot clone");

@@ -72,6 +72,13 @@ public class BitbucketUtil {
         return new SAXBuilder(false).build(stream).getRootElement();
     }
 
+    /**
+     * Returns list of repositories for logged user, or null if the login is cancelled.
+     *
+     * @param project project
+     * @param ownOnly return own repositories only if true
+     * @return list of repositories, or null on cancel
+     */
     public static List<RepositoryInfo> getRepositories(Project project, final boolean ownOnly) {
         final BitbucketSettings settings = BitbucketSettings.getInstance();
         boolean logged;
