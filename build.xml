@@ -36,6 +36,9 @@
             <fileset dir="build/classes">
                 <include name="**/*"/>
             </fileset>
+            <fileset dir="src">
+                <include name="**/*.properties"/>
+            </fileset>
             <fileset dir=".">
                 <include name="META-INF/*"/>
             </fileset>
