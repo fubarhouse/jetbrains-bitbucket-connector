@@ -1,10 +1,13 @@
 package org.bitbucket.connectors.jetbrains.ui;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import org.bitbucket.connectors.jetbrains.BitbucketUtil;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -21,8 +24,20 @@ public class BitbucketSettingsPanel {
     private JPasswordField myPasswordField;
 
     private JButton myTestButton;
+    private JTextPane mySignupPane;
 
     public BitbucketSettingsPanel() {
+        String msg = BitbucketBundle.message("signup-on-bitbucket", "https://bitbucket.org/account/signup/");
+        mySignupPane.setText(msg);
+        mySignupPane.setBackground(myPane.getBackground());
+        mySignupPane.addHyperlinkListener(new HyperlinkListener() {
+            public void hyperlinkUpdate(HyperlinkEvent e) {
+                if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                    BrowserUtil.launchBrowser(e.getURL().toExternalForm());
+                }
+            }
+        });
+
         myTestButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 boolean result = BitbucketUtil.checkCredentials(ProjectManager.getInstance().getDefaultProject(), getLogin(), getPassword());
