@@ -27,8 +27,8 @@ public class BitbucketShareDialog extends DialogWrapper {
         myRepositories = existingRepositories;
         init();
 
-        setTitle("Share project on Bitbucket");
-        setOKButtonText("Share");
+        setTitle(BitbucketBundle.message("share-project-on-bitbucket"));
+        setOKButtonText(BitbucketBundle.message("share"));
         myPanel.setRepositoryName(project.getName());
         myPanel.setCanCreatePrivate(canCreatePrivate);
         init();
@@ -41,7 +41,7 @@ public class BitbucketShareDialog extends DialogWrapper {
 
     @Override
     protected String getHelpId() {
-        return "bitbucket.share";
+        return null;
     }
 
     @Override
@@ -57,17 +57,17 @@ public class BitbucketShareDialog extends DialogWrapper {
     public void updateOkButton() {
         final String repositoryName = getRepositoryName();
         if (StringUtil.isEmpty(repositoryName)) {
-            setErrorText("No repository name selected");
+            setErrorText(BitbucketBundle.message("no-repository-name"));
             setOKActionEnabled(false);
             return;
         }
         if (myRepositories.contains(repositoryName)) {
-            setErrorText("Repository with selected name already exists");
+            setErrorText(BitbucketBundle.message("repository-exists"));
             setOKActionEnabled(false);
             return;
         }
         if (!REPO_NAME_PATTERN.matcher(repositoryName).matches()) {
-            setErrorText("Invalid repository name. Name should consist of letters, numbers, dashes and underscores");
+            setErrorText(BitbucketBundle.message("invalid-repository-name"));
             setOKActionEnabled(false);
             return;
         }

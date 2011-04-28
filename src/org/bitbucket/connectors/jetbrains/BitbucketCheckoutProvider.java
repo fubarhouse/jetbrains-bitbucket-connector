@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.util.SystemProperties;
+import org.bitbucket.connectors.jetbrains.ui.BitbucketBundle;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketCloneProjectDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,7 @@ public class BitbucketCheckoutProvider implements CheckoutProvider {
         }
 
         if (availableRepos.isEmpty()) {
-            Messages.showErrorDialog(project, "You don't have any repository available on Bitbucket.\nOnly your own or shared repositories can be cloned.", "Cannot clone");
+            Messages.showErrorDialog(project, BitbucketBundle.message("clone-err"), BitbucketBundle.message("cannot-clone"));
             return;
         }
         Collections.sort(availableRepos, new Comparator<RepositoryInfo>() {
@@ -101,7 +102,7 @@ public class BitbucketCheckoutProvider implements CheckoutProvider {
             }
         });
 
-        new Task.Backgroundable(project, "Checkout...", true) {
+        new Task.Backgroundable(project, BitbucketBundle.message("checkouting"), true) {
             public void run(@NotNull ProgressIndicator progressIndicator) {
                 HgCloneCommand cmd = new HgCloneCommand(project);
                 cmd.setRepositoryURL(repositoryUrl);
@@ -111,9 +112,9 @@ public class BitbucketCheckoutProvider implements CheckoutProvider {
                     HgCommandResult result = cmd.execute();
 
                     if (result == null) {
-                        error(project, "Clone failed", "Clone failed due to unknown error");
+                        error(project, BitbucketBundle.message("clone-failed"), BitbucketBundle.message("clone-failed-unknown-err"));
                     } else if (result.getExitValue() != 0) {
-                        error(project, "Clone failed", "Clone from " + repositoryUrl + " failed.<br>" + result.getRawError());
+                        error(project, BitbucketBundle.message("clone-failed"), BitbucketBundle.message("clone-failed-msg", repositoryUrl, result.getRawError()));
                     } else {
                         ApplicationManager.getApplication().invokeLater(new Runnable() {
                             public void run() {

@@ -41,7 +41,9 @@ public class BitbucketSettingsPanel {
         myTestButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 boolean result = BitbucketUtil.checkCredentials(ProjectManager.getInstance().getDefaultProject(), getLogin(), getPassword());
-                Messages.showInfoMessage(result ? "Connection successful" : "Cannot login to Bitbucket", result ? "Success" : "Failure");
+                Messages.showInfoMessage(
+                        result ? BitbucketBundle.message("connection-success") : BitbucketBundle.message("cannot-login"),
+                        result ? BitbucketBundle.message("success") : BitbucketBundle.message("failure"));
             }
         });
     }

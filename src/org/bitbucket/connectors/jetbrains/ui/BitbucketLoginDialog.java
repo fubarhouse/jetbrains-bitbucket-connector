@@ -27,8 +27,8 @@ public class BitbucketLoginDialog extends DialogWrapper {
         myPanel.setLogin(settings.getLogin());
         myPanel.setPassword(settings.getPassword());
 
-        setTitle("Login to Bitbucket");
-        setOKButtonText("Login");
+        setTitle(BitbucketBundle.message("login-bitbucket"));
+        setOKButtonText(BitbucketBundle.message("login"));
         init();
     }
 
@@ -56,7 +56,7 @@ public class BitbucketLoginDialog extends DialogWrapper {
         settings.setPassword(password);
         super.doOKAction();
       } else {
-        setErrorText("Cannot login with given credentials");
+        setErrorText(BitbucketBundle.message("cannot-login"));
       }
     }
 

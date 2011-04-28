@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.bitbucket.connectors.jetbrains.ui.BitbucketBundle;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketShareDialog;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
@@ -31,7 +32,7 @@ import java.util.*;
 public class BitbucketShareAction extends DumbAwareAction {
 
     public BitbucketShareAction() {
-        super("Share on Bitbucket", "Share on Bitbucket", BitbucketUtil.ICON);
+        super(BitbucketBundle.message("share-on-bitbucket"), BitbucketBundle.message("share-on-bitbucket"), BitbucketUtil.ICON);
     }
 
     public void update(AnActionEvent e) {
@@ -82,7 +83,7 @@ public class BitbucketShareAction extends DumbAwareAction {
                 public void run() {
                     createMercurialRepository(project, root);
                 }
-            }, "Create local repository", true, project);
+            }, BitbucketBundle.message("create-local-repository"), true, project);
         } else {
             if (hgRoot != root) {
                 return false;
@@ -95,7 +96,7 @@ public class BitbucketShareAction extends DumbAwareAction {
         try {
             new HgInitCommand(project).execute(root);
             new HgAddCommand(project).execute(getSourceFolders(project, root));
-            new HgCommitCommand(project, root, "initial revision").execute();
+            new HgCommitCommand(project, root, BitbucketBundle.message("initial-rev-msg")).execute();
             return true;
         } catch (Exception e) {
             return false;

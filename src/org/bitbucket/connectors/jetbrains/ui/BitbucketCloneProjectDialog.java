@@ -16,8 +16,8 @@ public class BitbucketCloneProjectDialog extends DialogWrapper {
     public BitbucketCloneProjectDialog(final Project project, final List<RepositoryInfo> repos) {
         super(project, true);
         myPanel = new BitbucketCloneProjectPanel(this);
-        setTitle("Select repository to clone");
-        setOKButtonText("Clone");
+        setTitle(BitbucketBundle.message("select-clone-repository"));
+        setOKButtonText(BitbucketBundle.message("clone"));
         myPanel.setAvailableRepos(repos);
         init();
         setOKActionEnabled(false);
@@ -44,25 +44,25 @@ public class BitbucketCloneProjectDialog extends DialogWrapper {
 
     public void updateOkButton() {
         if (getSelectedRepository() == null) {
-            setErrorText("No repository selected");
+            setErrorText(BitbucketBundle.message("no-repository-selected"));
             setOKActionEnabled(false);
             return;
         }
         String path = getSelectedPath();
         if (path == null) {
-            setErrorText("Please specify selected folder");
+            setErrorText(BitbucketBundle.message("select-clone-folder"));
             setOKActionEnabled(false);
             return;
         }
         VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
         if (file == null || !file.exists() || !file.isDirectory()) {
-            setErrorText("Cannot find selected folder");
+            setErrorText(BitbucketBundle.message("no-selected-folder"));
             setOKActionEnabled(false);
             return;
         }
         String projectName = getProjectName();
         if (file.findChild(projectName) != null) {
-            setErrorText("Folder " + projectName + " already exists");
+            setErrorText(BitbucketBundle.message("folder-exists", projectName));
             setOKActionEnabled(false);
             return;
         }

@@ -18,6 +18,7 @@ import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.bitbucket.connectors.jetbrains.ui.BitbucketBundle;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketLoginDialog;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -85,7 +86,7 @@ public class BitbucketUtil {
         try {
             logged = executeWithProgressSynchronously(project, new Computable<Boolean>() {
                 public Boolean compute() {
-                    ProgressManager.getInstance().getProgressIndicator().setText("Login to Bitbucket...");
+                    ProgressManager.getInstance().getProgressIndicator().setText(BitbucketBundle.message("logging-bitbucket"));
                     return testConnection(settings.getLogin(), settings.getPassword());
                 }
             });
@@ -104,7 +105,7 @@ public class BitbucketUtil {
         try {
             return executeWithProgressSynchronously(project, new Computable<List<RepositoryInfo>>() {
                 public List<RepositoryInfo> compute() {
-                    ProgressManager.getInstance().getProgressIndicator().setText("Getting list of repositories...");
+                    ProgressManager.getInstance().getProgressIndicator().setText(BitbucketBundle.message("getting-repositories-list"));
                     return getRepositories(settings.getLogin(), settings.getPassword(), ownOnly);
                 }
             });
@@ -140,7 +141,7 @@ public class BitbucketUtil {
         try {
             return executeWithProgressSynchronously(project, new Computable<Boolean>() {
                 public Boolean compute() {
-                    ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to Bitbucket");
+                    ProgressManager.getInstance().getProgressIndicator().setText(BitbucketBundle.message("trying-login-bibucket"));
                     if (login != null && password != null) {
                         return testConnection(login, password);
                     }
@@ -173,7 +174,7 @@ public class BitbucketUtil {
 
     public static <T> T executeWithProgressSynchronously(final Project project, final Computable<T> computable) throws CancelledException {
         final Ref<T> result = new Ref<T>();
-        ProgressManager.getInstance().run(new Task.Modal(project, "Access to Bitbucket", true) {
+        ProgressManager.getInstance().run(new Task.Modal(project, BitbucketBundle.message("access-bitbucket"), true) {
             public void run(@NotNull ProgressIndicator indicator) {
                 result.set(computable.compute());
             }
@@ -187,7 +188,7 @@ public class BitbucketUtil {
     }
 
     public static void executeWithProgressSynchronously(final Project project, final Runnable runnable) throws CancelledException {
-        ProgressManager.getInstance().run(new Task.Modal(project, "Access to Bitbucket", true) {
+        ProgressManager.getInstance().run(new Task.Modal(project, BitbucketBundle.message("access-bitbucket"), true) {
             public void run(@NotNull ProgressIndicator indicator) {
                 runnable.run();
             }
@@ -215,7 +216,7 @@ public class BitbucketUtil {
                 }
             }
         });
-        Messages.showInfoMessage(project, "The project has been shared on the Bitbucket.", "Bitbucket share project");
+        Messages.showInfoMessage(project, BitbucketBundle.message("project-shared"), BitbucketBundle.message("share-project-on-bitbucket"));
     }
 
     private static void setRepositoryDefaultPath(VirtualFile root, String url) throws IOException {
