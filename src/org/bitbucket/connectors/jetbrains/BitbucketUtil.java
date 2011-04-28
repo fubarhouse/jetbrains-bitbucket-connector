@@ -7,10 +7,10 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Icons;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.NameValuePair;
@@ -38,7 +38,7 @@ import java.util.Map;
 public class BitbucketUtil {
 
     public static final String BITBUCKET = "bitbucket.org";
-    public static final Icon ICON = Icons.WEB_ICON;
+    public static final Icon ICON = IconLoader.getIcon("res/bitbucket.png", BitbucketUtil.class);
 
     private static HttpClient getClient(String login, String password) {
         HttpClient client = new HttpClient();
