@@ -20,6 +20,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketBundle;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketLoginDialog;
+import org.bitbucket.connectors.jetbrains.ui.HtmlMessageDialog;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
@@ -220,7 +221,8 @@ public class BitbucketUtil {
         });
         RepositoryInfo repository = repo[0];
         if (repository != null) {
-            Messages.showInfoMessage(project, BitbucketBundle.message("project-shared", name, repository.getCheckoutUrl()), BitbucketBundle.message("share-project-on-bitbucket"));
+            HtmlMessageDialog dialog = new HtmlMessageDialog(project, BitbucketBundle.message("project-shared", name, repository.getCheckoutUrl(false)), BitbucketBundle.message("share-project-on-bitbucket"));
+            dialog.show();
         }
     }
 
