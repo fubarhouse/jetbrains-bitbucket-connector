@@ -187,8 +187,8 @@ public class BitbucketUtil {
         return result.get();
     }
 
-    public static void executeWithProgressSynchronously(final Project project, final Runnable runnable) throws CancelledException {
-        ProgressManager.getInstance().run(new Task.Modal(project, BitbucketBundle.message("access-bitbucket"), true) {
+    public static void executeWithProgressSynchronously(final Project project, String title, final Runnable runnable) throws CancelledException {
+        ProgressManager.getInstance().run(new Task.Modal(project, title, true) {
             public void run(@NotNull ProgressIndicator indicator) {
                 runnable.run();
             }
@@ -201,7 +201,8 @@ public class BitbucketUtil {
     }
 
     public static void share(final Project project, final VirtualFile root, final String name, final String description) {
-        executeWithProgressSynchronously(project, new Runnable() {
+        final RepositoryInfo[] repo = new RepositoryInfo[1];
+        executeWithProgressSynchronously(project, BitbucketBundle.message("push-bitbucket", name), new Runnable() {
             public void run() {
                 BitbucketSettings settings = BitbucketSettings.getInstance();
                 RepositoryInfo repository = createBitbucketRepository(settings.getLogin(), settings.getPassword(), name, description, true);
@@ -210,13 +211,17 @@ public class BitbucketUtil {
                     try {
                         HgCommandResult result = new HgPushCommand(project, root, addCredentials(repositoryUrl)).execute();
                         setRepositoryDefaultPath(root, repositoryUrl);
+                        repo[0] = repository;
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
                 }
             }
         });
-        Messages.showInfoMessage(project, BitbucketBundle.message("project-shared"), BitbucketBundle.message("share-project-on-bitbucket"));
+        RepositoryInfo repository = repo[0];
+        if (repository != null) {
+            Messages.showInfoMessage(project, BitbucketBundle.message("project-shared", name, repository.getCheckoutUrl()), BitbucketBundle.message("share-project-on-bitbucket"));
+        }
     }
 
     private static void setRepositoryDefaultPath(VirtualFile root, String url) throws IOException {
