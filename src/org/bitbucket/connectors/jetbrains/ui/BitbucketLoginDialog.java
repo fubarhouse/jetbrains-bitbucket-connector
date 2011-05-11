@@ -38,7 +38,7 @@ public class BitbucketLoginDialog extends DialogWrapper {
     }
 
     protected Action[] createActions() {
-      return new Action[] {getOKAction(), getCancelAction(), getHelpAction()};
+        return new Action[]{getOKAction(), getCancelAction()};
     }
 
     @Override
