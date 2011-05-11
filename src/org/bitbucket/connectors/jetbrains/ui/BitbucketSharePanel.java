@@ -4,6 +4,7 @@ import com.intellij.ui.DocumentAdapter;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import java.awt.*;
 
 /**
  * User: leha2000
@@ -24,6 +25,7 @@ public class BitbucketSharePanel {
                 dialog.updateOkButton();
             }
         });
+        myNameTextField.setPreferredSize(new Dimension(myNameTextField.getFontMetrics(myNameTextField.getFont()).charWidth('W') * 30, -1));
     }
 
     public JPanel getPanel() {

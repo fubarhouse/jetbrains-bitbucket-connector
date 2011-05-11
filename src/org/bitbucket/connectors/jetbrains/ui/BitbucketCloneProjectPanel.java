@@ -54,6 +54,7 @@ public class BitbucketCloneProjectPanel {
         };
         myProjectNameText.getDocument().addDocumentListener(listener);
         myTextFieldWithBrowseButton.getChildComponent().getDocument().addDocumentListener(listener);
+        myTextFieldWithBrowseButton.setTextFieldPreferredWidth(50);
 
         myTextFieldWithBrowseButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
