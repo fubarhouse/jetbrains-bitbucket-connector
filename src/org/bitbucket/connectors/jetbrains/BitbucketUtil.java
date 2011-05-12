@@ -5,7 +5,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
@@ -177,6 +176,7 @@ public class BitbucketUtil {
         final Ref<T> result = new Ref<T>();
         ProgressManager.getInstance().run(new Task.Modal(project, BitbucketBundle.message("access-bitbucket"), true) {
             public void run(@NotNull ProgressIndicator indicator) {
+                indicator.setIndeterminate(true);
                 result.set(computable.compute());
             }
 
@@ -191,6 +191,7 @@ public class BitbucketUtil {
     public static void executeWithProgressSynchronously(final Project project, String title, final Runnable runnable) throws CancelledException {
         ProgressManager.getInstance().run(new Task.Modal(project, title, true) {
             public void run(@NotNull ProgressIndicator indicator) {
+                indicator.setIndeterminate(true);
                 runnable.run();
             }
 
