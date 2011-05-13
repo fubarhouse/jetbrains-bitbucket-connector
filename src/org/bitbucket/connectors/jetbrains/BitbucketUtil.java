@@ -163,8 +163,9 @@ public class BitbucketUtil {
 
     public static boolean testConnection(final String login, final String password) {
         try {
-            Element element = request(login, password, "/users/" + login, false, null);
-            return element.getChild("user").getChild("email") != null;
+            Element element = request(login, password, "/emails/", false, null);
+            List<Element> children = element.getChildren();
+            return children.size() > 0 && children.get(0).getChildren().size() > 0;
         }
         catch (Exception e) {
             // Ignore
