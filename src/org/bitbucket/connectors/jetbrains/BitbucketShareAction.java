@@ -15,8 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketBundle;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketShareDialog;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgFile;
-import org.zmlx.hg4idea.HgUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.HgAddCommand;
 import org.zmlx.hg4idea.command.HgCommitCommand;
@@ -94,7 +93,7 @@ public class BitbucketShareAction extends DumbAwareAction {
 
     private boolean createMercurialRepository(Project project, VirtualFile root) {
         try {
-            new HgInitCommand(project).execute(root);
+            new HgInitCommand(project).execute(root, null);
             new HgAddCommand(project).execute(getSourceFolders(project, root));
             new HgCommitCommand(project, root, BitbucketBundle.message("initial-rev-msg")).execute();
             return true;
@@ -103,10 +102,10 @@ public class BitbucketShareAction extends DumbAwareAction {
         }
     }
 
-    private List<HgFile> getSourceFolders(Project project, VirtualFile root) {
-        List<HgFile> result = new ArrayList<HgFile>();
+    private List<VirtualFile> getSourceFolders(Project project, VirtualFile root) {
+        List<VirtualFile> result = new ArrayList<VirtualFile>();
         for (VirtualFile src: ProjectRootManager.getInstance(project).getContentRoots()) {
-            result.add(new HgFile(project, src));
+            result.add(src);
         }
         return result;
     }

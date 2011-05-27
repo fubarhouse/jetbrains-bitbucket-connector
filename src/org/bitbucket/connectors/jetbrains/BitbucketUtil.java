@@ -24,9 +24,10 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.command.HgCommandResult;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgPushCommand;
-import org.zmlx.hg4idea.command.HgUrl;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 
 import javax.swing.*;
 import java.io.*;
@@ -212,7 +213,10 @@ public class BitbucketUtil {
                 if (repository != null) {
                     String repositoryUrl = repository.getCheckoutUrl(false);
                     try {
-                        HgCommandResult result = new HgPushCommand(project, root, addCredentials(repositoryUrl)).execute();
+                        new HgPushCommand(project, root, addCredentials(repositoryUrl)).execute(new HgCommandResultHandler() {
+                            public void process(@Nullable HgCommandResult result) {
+                            }
+                        });
                         setRepositoryDefaultPath(root, repositoryUrl);
                         repo[0] = repository;
                     } catch (Exception e) {
@@ -301,15 +305,16 @@ public class BitbucketUtil {
     }
 
     public static String addCredentials(String repositoryUrl) {
-        HgUrl url;
-        try {
-            url = new HgUrl(repositoryUrl);
-            BitbucketSettings settings = BitbucketSettings.getInstance();
-            url.setUsername(settings.getLogin());
-            url.setPassword(settings.getPassword());
-            return url.asString();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        int userEnd = repositoryUrl.indexOf("@");
+        if (userEnd == -1) {
+            throw new RuntimeException("Can't add credentials to url");
         }
+        int userStart = repositoryUrl.substring(0, userEnd).lastIndexOf("/");
+        if (userStart == -1) {
+            throw new RuntimeException("Can't add credentials to url");
+        }
+
+        BitbucketSettings settings = BitbucketSettings.getInstance();
+        return repositoryUrl.substring(0, userStart + 1) + settings.getLogin() + ":" + settings.getPassword() + repositoryUrl.substring(userEnd);
     }
 }
