@@ -304,17 +304,24 @@ public class BitbucketUtil {
         }
     }
 
+    private static final String PROTOCOL_SEPARATOR = "//";
+
     public static String addCredentials(String repositoryUrl) {
-        int userEnd = repositoryUrl.indexOf("@");
-        if (userEnd == -1) {
+        int start = repositoryUrl.indexOf(PROTOCOL_SEPARATOR);
+        if (start == -1) {
             throw new RuntimeException("Can't add credentials to url");
         }
-        int userStart = repositoryUrl.substring(0, userEnd).lastIndexOf("/");
-        if (userStart == -1) {
-            throw new RuntimeException("Can't add credentials to url");
-        }
+        start += PROTOCOL_SEPARATOR.length();
 
         BitbucketSettings settings = BitbucketSettings.getInstance();
-        return repositoryUrl.substring(0, userStart + 1) + settings.getLogin() + ":" + settings.getPassword() + repositoryUrl.substring(userEnd);
+        String cred = settings.getLogin() + ":" + settings.getPassword();
+
+        int end = repositoryUrl.indexOf("@", start);
+        if (end == -1) {
+            cred += "@";
+            end = start;
+        }
+
+        return repositoryUrl.substring(0, start) + cred + repositoryUrl.substring(end);
     }
 }
