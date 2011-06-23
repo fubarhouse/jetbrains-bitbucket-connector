@@ -1,6 +1,6 @@
 <project basedir="." default="dist">
 
-    <property name="idea.dir" value="/home/leha/java/idea-IC-103.255"/>
+    <property name="idea.dir" value="/home/leha/java/idea-IC-107.105"/>
     <property name="idea.lib" value="${idea.dir}/lib"/>
 
     <path id="javac2.classpath">
@@ -38,6 +38,7 @@
             </fileset>
             <fileset dir="src">
                 <include name="**/*.properties"/>
+                <include name="**/*.png"/>
             </fileset>
             <fileset dir=".">
                 <include name="META-INF/*"/>
