@@ -136,6 +136,8 @@ public class BitbucketCloneProjectPanel {
     }
 
     public void setAvailableRepos(List<RepositoryInfo> repos) {
+        Collections.sort(repos);
+
         mySelectRepositoryComboBox.setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(repos)));
         RepositoryInfo preselectedRepository = (RepositoryInfo) mySelectRepositoryComboBox.getSelectedItem();
         if (preselectedRepository != null) {
