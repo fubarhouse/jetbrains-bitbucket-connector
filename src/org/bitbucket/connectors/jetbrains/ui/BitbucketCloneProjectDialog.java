@@ -2,6 +2,7 @@ package org.bitbucket.connectors.jetbrains.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.bitbucket.connectors.jetbrains.RepositoryInfo;
@@ -43,10 +44,18 @@ public class BitbucketCloneProjectDialog extends DialogWrapper {
     }
 
     public void updateOkButton() {
-        if (getSelectedRepository() == null) {
-            setErrorText(BitbucketBundle.message("no-repository-selected"));
-            setOKActionEnabled(false);
-            return;
+        if (isRepositoryUrl()) {
+            if (StringUtil.isEmpty(getRepositoryUrl())) {
+                setErrorText(BitbucketBundle.message("no-repository-url"));
+                setOKActionEnabled(false);
+                return;
+            }
+        } else {
+            if (getSelectedRepository() == null) {
+                setErrorText(BitbucketBundle.message("no-repository-selected"));
+                setOKActionEnabled(false);
+                return;
+            }
         }
         String path = getSelectedPath();
         if (path == null) {
@@ -77,6 +86,14 @@ public class BitbucketCloneProjectDialog extends DialogWrapper {
 
     public RepositoryInfo getSelectedRepository() {
         return myPanel.getSelectedRepository();
+    }
+
+    public boolean isRepositoryUrl() {
+        return myPanel.isRepositoryUrl();
+    }
+
+    public String getRepositoryUrl() {
+        return myPanel.getRepositoryUrl();
     }
 
     public String getSelectedPath() {

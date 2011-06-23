@@ -2,7 +2,7 @@ package org.bitbucket.connectors.jetbrains;
 
 import org.jdom.Element;
 
-public class RepositoryInfo {
+public class RepositoryInfo implements Comparable<RepositoryInfo> {
     private Element myRepositoryElement;
 
     RepositoryInfo(Element repositoryElement) {
@@ -38,6 +38,29 @@ public class RepositoryInfo {
             return "ssh://hg@" + BitbucketUtil.BITBUCKET + "/" + owner + "/" + name;
         } else {
             return "https://" + BitbucketUtil.BITBUCKET + "/" + owner + "/" + name;
+        }
+    }
+
+    public boolean isMy() {
+        return BitbucketSettings.getInstance().getLogin().equals(getOwner());
+    }
+
+    public int compareTo(RepositoryInfo r) {
+        if (r == this) {
+            return 0;
+        }
+        if (r == null) {
+            return -1;
+        }
+
+        if (isMy() == r.isMy()) {
+            int res = getOwner().compareTo(r.getOwner());
+            if (res != 0) {
+                return res;
+            }
+            return getName().compareTo(r.getName());
+        } else {
+            return isMy() ? -1 : 1;
         }
     }
 }

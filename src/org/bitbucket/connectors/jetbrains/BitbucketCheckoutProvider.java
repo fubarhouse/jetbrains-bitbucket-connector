@@ -71,7 +71,6 @@ public class BitbucketCheckoutProvider implements CheckoutProvider {
             return;
         }
 
-        RepositoryInfo repository = checkoutDialog.getSelectedRepository();
         File folder = new File(checkoutDialog.getSelectedPath());
         if (!folder.exists() || !folder.isDirectory()) {
             return;
@@ -89,7 +88,8 @@ public class BitbucketCheckoutProvider implements CheckoutProvider {
             }
         }
 
-        String repositoryUrl = repository.getCheckoutUrl();
+        RepositoryInfo repository = checkoutDialog.getSelectedRepository();
+        String repositoryUrl = repository != null ? repository.getCheckoutUrl(false) : checkoutDialog.getRepositoryUrl();
         repositoryUrl = BitbucketUtil.addCredentials(repositoryUrl);
 
         checkout(project, repositoryUrl, folder.getPath(), listener);
