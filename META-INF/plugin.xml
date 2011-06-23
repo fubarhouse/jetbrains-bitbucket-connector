@@ -3,6 +3,7 @@
   <id>org.bitbucket.connector</id>
   <!--<vendor logo="/general/ijLogo.png">JetBrains</vendor>-->
   <description>Bitbucket integration</description>
+  <version>beta 2</version>
 
   <depends>com.intellij.modules.lang</depends>
   <depends>hg4idea</depends>
