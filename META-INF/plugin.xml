@@ -1,7 +1,8 @@
-<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude" url="https://bitbucket.org/atlassian/jetbrains-bitbucket-connector/">
   <name>Bitbucket</name>
   <id>org.bitbucket.connector</id>
   <!--<vendor logo="/general/ijLogo.png">JetBrains</vendor>-->
+  <vendor email="support@bitbucket.org"/>
   <description>Bitbucket integration</description>
   <version>beta 2</version>
 
