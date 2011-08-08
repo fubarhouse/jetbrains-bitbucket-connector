@@ -40,9 +40,26 @@
                 <include name="**/*.properties"/>
                 <include name="**/*.png"/>
             </fileset>
+            <fileset dir="images">
+                <include name="**/*.png"/>
+            </fileset>
             <fileset dir=".">
                 <include name="META-INF/*"/>
             </fileset>
         </jar>
+
+        <mkdir dir="build/Bitbucket/lib"/>
+        <copy todir="build/Bitbucket/lib">
+            <fileset dir="lib">
+                <include name="*.jar"/>
+            </fileset>
+            <fileset dir="build">
+                <include name="*.jar"/>
+            </fileset>
+        </copy>
+
+        <zip basedir="build" destfile="build/bitbucket.zip">
+            <include name="Bitbucket/lib/*.jar"/>
+        </zip>
 	</target>
 </project>
