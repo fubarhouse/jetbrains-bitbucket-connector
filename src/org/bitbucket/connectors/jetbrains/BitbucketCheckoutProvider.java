@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.util.SystemProperties;
+import org.apache.commons.httpclient.URIException;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketBundle;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketCloneProjectDialog;
 import org.jetbrains.annotations.NotNull;
@@ -89,10 +90,13 @@ public class BitbucketCheckoutProvider implements CheckoutProvider {
         }
 
         RepositoryInfo repository = checkoutDialog.getSelectedRepository();
-        String repositoryUrl = repository != null ? repository.getCheckoutUrl(false) : checkoutDialog.getRepositoryUrl();
-        repositoryUrl = BitbucketUtil.addCredentials(repositoryUrl);
 
-        checkout(project, repositoryUrl, folder.getPath(), listener);
+        try {
+            String repositoryUrl = repository != null ? repository.getCheckoutUrl() : checkoutDialog.getRepositoryUrl();
+            checkout(project, repositoryUrl, folder.getPath(), listener);
+        } catch (URIException e) {
+            Messages.showErrorDialog(project, e.getMessage(), BitbucketBundle.message("url-encode-err"));
+        }
     }
 
     private void checkout(final Project project, final String repositoryUrl, final String folder, final Listener listener) {

@@ -1,5 +1,7 @@
 package org.bitbucket.connectors.jetbrains;
 
+import org.apache.commons.httpclient.URIException;
+import org.apache.commons.httpclient.util.URIUtil;
 import org.jdom.Element;
 
 public class RepositoryInfo implements Comparable<RepositoryInfo> {
@@ -25,19 +27,21 @@ public class RepositoryInfo implements Comparable<RepositoryInfo> {
         return myRepositoryElement.getChildText("is_private");
     }
 
-    public String getCheckoutUrl() {
-        String owner = getOwner();
-        return getCheckoutUrl(BitbucketSettings.getInstance().getLogin().equals(owner));
+    public String getCheckoutUrl() throws URIException {
+        return getCheckoutUrl(false);
     }
 
-    public String getCheckoutUrl(boolean ssh) {
+    public String getCheckoutUrl(boolean ssh) throws URIException {
         String name = getSlug();
         String owner = getOwner();
 
         if (ssh) {
             return "ssh://hg@" + BitbucketUtil.BITBUCKET + "/" + owner + "/" + name;
         } else {
-            return "https://" + BitbucketUtil.BITBUCKET + "/" + owner + "/" + name;
+            BitbucketSettings settings = BitbucketSettings.getInstance();
+            String cred = URIUtil.encodeWithinAuthority(settings.getLogin()) + ":" + URIUtil.encodeWithinAuthority(settings.getPassword());
+
+            return "https://" + cred + "@" + BitbucketUtil.BITBUCKET + "/" + owner + "/" + name;
         }
     }
 

@@ -5,15 +5,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.NameValuePair;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
+import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
@@ -211,9 +209,9 @@ public class BitbucketUtil {
                 BitbucketSettings settings = BitbucketSettings.getInstance();
                 RepositoryInfo repository = createBitbucketRepository(settings.getLogin(), settings.getPassword(), name, description, true);
                 if (repository != null) {
-                    String repositoryUrl = repository.getCheckoutUrl(false);
                     try {
-                        new HgPushCommand(project, root, addCredentials(repositoryUrl)).execute(new HgCommandResultHandler() {
+                        String repositoryUrl = repository.getCheckoutUrl();
+                        new HgPushCommand(project, root, repositoryUrl).execute(new HgCommandResultHandler() {
                             public void process(@Nullable HgCommandResult result) {
                             }
                         });
@@ -227,8 +225,12 @@ public class BitbucketUtil {
         });
         RepositoryInfo repository = repo[0];
         if (repository != null) {
-            HtmlMessageDialog dialog = new HtmlMessageDialog(project, BitbucketBundle.message("project-shared", name, repository.getCheckoutUrl(false)), BitbucketBundle.message("share-project-on-bitbucket"));
-            dialog.show();
+            try {
+                HtmlMessageDialog dialog = new HtmlMessageDialog(project, BitbucketBundle.message("project-shared", name, repository.getCheckoutUrl()), BitbucketBundle.message("share-project-on-bitbucket"));
+                dialog.show();
+            } catch (URIException e) {
+                Messages.showErrorDialog(project, e.getMessage(), BitbucketBundle.message("url-encode-err"));
+            }
         }
     }
 
@@ -302,26 +304,5 @@ public class BitbucketUtil {
         } catch (Exception e) {
             return null;
         }
-    }
-
-    private static final String PROTOCOL_SEPARATOR = "//";
-
-    public static String addCredentials(String repositoryUrl) {
-        int start = repositoryUrl.indexOf(PROTOCOL_SEPARATOR);
-        if (start == -1) {
-            throw new RuntimeException("Can't add credentials to url");
-        }
-        start += PROTOCOL_SEPARATOR.length();
-
-        BitbucketSettings settings = BitbucketSettings.getInstance();
-        String cred = settings.getLogin() + ":" + settings.getPassword();
-
-        int end = repositoryUrl.indexOf("@", start);
-        if (end == -1) {
-            cred += "@";
-            end = start;
-        }
-
-        return repositoryUrl.substring(0, start) + cred + repositoryUrl.substring(end);
     }
 }
