@@ -172,6 +172,24 @@ public class BitbucketUtil {
         return false;
     }
 
+    public static boolean sshEnabled(final Project project, final String login, final String password) {
+        return executeWithProgressSynchronously(project, new Computable<Boolean>() {
+            public Boolean compute() {
+                return sshEnabled(login, password);
+            }
+        });
+    }
+
+    private static boolean sshEnabled(final String login, final String password) {
+        try {
+            Element element = request(login, password, "/ssh-keys/", false, null);
+            List<Element> children = element.getChildren();
+            return children.size() > 0 && children.get(0).getChild("key") != null;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public static <T> T executeWithProgressSynchronously(final Project project, final Computable<T> computable) throws CancelledException {
         final Ref<T> result = new Ref<T>();
         ProgressManager.getInstance().run(new Task.Modal(project, BitbucketBundle.message("access-bitbucket"), true) {

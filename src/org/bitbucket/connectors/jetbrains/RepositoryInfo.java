@@ -5,7 +5,9 @@ import org.apache.commons.httpclient.util.URIUtil;
 import org.jdom.Element;
 
 public class RepositoryInfo implements Comparable<RepositoryInfo> {
+
     private Element myRepositoryElement;
+    private String myCheckoutUrl;
 
     RepositoryInfo(Element repositoryElement) {
         myRepositoryElement = repositoryElement;
@@ -28,17 +30,22 @@ public class RepositoryInfo implements Comparable<RepositoryInfo> {
     }
 
     public String getCheckoutUrl() throws URIException {
-        return getCheckoutUrl(false);
+        if (myCheckoutUrl == null) {
+            myCheckoutUrl = calculateCheckoutUrl();
+        }
+        return myCheckoutUrl;
     }
 
-    public String getCheckoutUrl(boolean ssh) throws URIException {
+    private String calculateCheckoutUrl() throws URIException {
         String name = getSlug();
         String owner = getOwner();
+
+        BitbucketSettings settings = BitbucketSettings.getInstance();
+        boolean ssh = BitbucketUtil.sshEnabled(null, settings.getLogin(), settings.getPassword());
 
         if (ssh) {
             return "ssh://hg@" + BitbucketUtil.BITBUCKET + "/" + owner + "/" + name;
         } else {
-            BitbucketSettings settings = BitbucketSettings.getInstance();
             String cred = URIUtil.encodeWithinAuthority(settings.getLogin()) + ":" + URIUtil.encodeWithinAuthority(settings.getPassword());
 
             return "https://" + cred + "@" + BitbucketUtil.BITBUCKET + "/" + owner + "/" + name;
