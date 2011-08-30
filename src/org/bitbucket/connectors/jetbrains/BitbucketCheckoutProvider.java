@@ -1,9 +1,6 @@
 package org.bitbucket.connectors.jetbrains;
 
 import com.intellij.ide.GeneralSettings;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -14,12 +11,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.UIUtil;
 import org.apache.commons.httpclient.URIException;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketBundle;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketCloneProjectDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.HgCloneCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.provider.HgCheckoutProvider;
@@ -118,7 +115,7 @@ public class BitbucketCheckoutProvider implements CheckoutProvider {
                     if (result == null) {
                         error(project, BitbucketBundle.message("clone-failed"), BitbucketBundle.message("clone-failed-unknown-err"));
                     } else if (result.getExitValue() != 0) {
-                        error(project, BitbucketBundle.message("clone-failed"), BitbucketBundle.message("clone-failed-msg", repositoryUrl, result.getRawError()));
+                        error(project, BitbucketBundle.message("clone-failed"), BitbucketBundle.message("clone-failed-msg", repositoryUrl, result.getRawError() + "\n" + result.getRawOutput()));
                     } else {
                         ApplicationManager.getApplication().invokeLater(new Runnable() {
                             public void run() {
@@ -150,8 +147,12 @@ public class BitbucketCheckoutProvider implements CheckoutProvider {
         }
     }
 
-    private static void error(Project project, String title, String msg) {
-        Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID, title, msg, NotificationType.ERROR), project);
+    private static void error(final Project project, final String title, final String msg) {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+            public void run() {
+                Messages.showErrorDialog(project, msg, title);
+            }
+        });
     }
 
     public String getVcsName() {
