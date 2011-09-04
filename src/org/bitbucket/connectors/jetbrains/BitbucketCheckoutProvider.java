@@ -156,6 +156,6 @@ public class BitbucketCheckoutProvider implements CheckoutProvider {
     }
 
     public String getVcsName() {
-        return "Bitbucket";
+        return BitbucketUtil.BITBUCKET;
     }
 }

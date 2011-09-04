@@ -5,6 +5,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.bitbucket.connectors.jetbrains.BitbucketUtil;
 import org.bitbucket.connectors.jetbrains.RepositoryInfo;
 
 import javax.swing.*;
@@ -35,7 +36,7 @@ public class BitbucketCloneProjectDialog extends DialogWrapper {
 
     @Override
     protected String getHelpId() {
-        return "Bitbucket";
+        return BitbucketUtil.BITBUCKET;
     }
 
     @Override

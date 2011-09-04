@@ -44,11 +44,11 @@ public class RepositoryInfo implements Comparable<RepositoryInfo> {
         boolean ssh = BitbucketUtil.sshEnabled(null, settings.getLogin(), settings.getPassword());
 
         if (ssh) {
-            return "ssh://hg@" + BitbucketUtil.BITBUCKET + "/" + owner + "/" + name;
+            return "ssh://hg@" + BitbucketUtil.BITBUCKET_DN + "/" + owner + "/" + name;
         } else {
             String cred = URIUtil.encodeWithinAuthority(settings.getLogin()) + ":" + URIUtil.encodeWithinAuthority(settings.getPassword());
 
-            return "https://" + cred + "@" + BitbucketUtil.BITBUCKET + "/" + owner + "/" + name;
+            return "https://" + cred + "@" + BitbucketUtil.BITBUCKET_DN + "/" + owner + "/" + name;
         }
     }
 
