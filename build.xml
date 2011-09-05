@@ -29,6 +29,10 @@
                 <fileset dir="${basedir}/lib">
                     <include name="*.jar"/>
                 </fileset>
+                <fileset dir="${idea.dir}/plugins/tasks/lib">
+                    <include name="tasks-api.jar"/>
+                    <include name="tasks-core.jar"/>
+                </fileset>
             </classpath>
         </javac2>
 
