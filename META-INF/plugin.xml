@@ -1,0 +1,25 @@
+<idea-plugin version="2" url="https://bitbucket.org/atlassian/jetbrains-bitbucket-connector/">
+  <name>Bitbucket</name>
+  <id>org.bitbucket.connector</id>
+  <vendor url="http://bitbucket.org/" email="support@bitbucket.org" logo="/images/bitbucket.png">Bitbucket</vendor>
+  <idea-version since-build="107.105"/>
+  <description>The Bitbucket plugin enables you to checkout your existing Bitbucket repository and auto-open it as a project or share a project on Bitbucket instantly.</description>
+  <version>1.0.1</version>
+
+  <depends>com.intellij.modules.lang</depends>
+  <depends>hg4idea</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <checkoutProvider implementation="org.bitbucket.connectors.jetbrains.BitbucketCheckoutProvider"/>
+    <applicationService serviceInterface="org.bitbucket.connectors.jetbrains.BitbucketSettings"
+                        serviceImplementation="org.bitbucket.connectors.jetbrains.BitbucketSettings"/>
+    <applicationConfigurable instance="org.bitbucket.connectors.jetbrains.ui.BitbucketSettingsConfigurable"/>
+    <checkoutCompletedListener implementation="org.bitbucket.connectors.jetbrains.BitbucketCheckoutListener" order="after PlatformProjectCheckoutListener"/>
+  </extensions>
+  <actions>
+      <action id="Bitbucket.Share" class="org.bitbucket.connectors.jetbrains.BitbucketShareAction">
+        <add-to-group group-id="Vcs.Import"/>
+      </action>
+  </actions>
+</idea-plugin>
