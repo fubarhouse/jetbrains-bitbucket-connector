@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import org.apache.commons.httpclient.URIException;
 import org.bitbucket.connectors.jetbrains.BitbucketSettings;
 import org.bitbucket.connectors.jetbrains.BitbucketUtil;
 import org.bitbucket.connectors.jetbrains.RepositoryInfo;
@@ -60,10 +59,8 @@ public class BitbucketIssueRepositoryEditor extends BaseRepositoryEditor<Bitbuck
         mySelectRepositoryComboBox.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 RepositoryInfo repositoryInfo = (RepositoryInfo) e.getItem();
-                try {
-                    myURLText.setText((repositoryInfo != null ? repositoryInfo.getCheckoutUrl() : ""));
-                } catch (URIException unused) {
-                }
+                myURLText.setText((repositoryInfo != null ? createRepositoryUrl(repositoryInfo) : ""));
+                apply();
             }
         });
 
@@ -76,6 +73,11 @@ public class BitbucketIssueRepositoryEditor extends BaseRepositoryEditor<Bitbuck
                 return new Dimension(oldSize.width, size.height);
             }
         }, BorderLayout.CENTER);
+    }
+
+    private String createRepositoryUrl(RepositoryInfo repositoryInfo) {
+        return BitbucketUtil.API_URL_BASE + "/" + "repositories" + "/" + repositoryInfo.getOwner() + "/" +
+        repositoryInfo.getSlug();
     }
 
     @Override
