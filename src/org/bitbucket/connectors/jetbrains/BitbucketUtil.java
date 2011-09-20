@@ -1,6 +1,8 @@
 package org.bitbucket.connectors.jetbrains;
 
 
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -10,7 +12,11 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.Consumer;
+import com.intellij.util.SystemProperties;
 import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -29,10 +35,7 @@ import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 
 import javax.swing.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class BitbucketUtil {
     public static final String BITBUCKET = "Bitbucket";
@@ -185,6 +188,58 @@ public class BitbucketUtil {
             Element element = request(login, password, "/ssh-keys/", false, null);
             List<Element> children = element.getChildren();
             return children.size() > 0 && children.get(0).getChild("key") != null;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public static boolean addSshKey(final Project project, final String login, final String password) {
+        FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
+            @Override
+            public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+                return file.isDirectory() || super.isFileVisible(file, showHiddenFiles);
+            }
+        };
+        descriptor.setIsTreeRootVisible(true);
+        String home = SystemProperties.getUserHome();
+        VirtualFile root = null;
+        if (home != null) {
+            root = VirtualFileManager.getInstance().findFileByUrl("file://" + home);
+            if (root != null) {
+                VirtualFile ssh = root.findChild(".ssh"); // id_dsa.pub
+                if (ssh == null) {
+                    ssh = root.findChild("Application Data/SSH/UserKeys");
+                }
+                if (ssh != null) {
+                    root = ssh;
+                }
+            }
+        }
+        descriptor.setTitle("Please choose SSH key");
+
+        FileChooser.chooseFilesWithSlideEffect(descriptor, project, root, new Consumer< VirtualFile[]>() {
+            public void consume(VirtualFile[] virtualFiles) {
+                for (VirtualFile f: virtualFiles) {
+                    try {
+                        final String key = VfsUtil.loadText(f);
+                        executeWithProgressSynchronously(project, new Computable<Boolean>() {
+                            public Boolean compute() {
+                                return addSshKey(login, password, key);
+                            }
+                        });
+                    } catch (IOException e1) {
+                        Messages.showErrorDialog("Can't read SSH key: " + f.getPath(), "SSH key");
+                    }
+                }
+            }
+        });
+        return sshEnabled(login, password);
+    }
+
+    private static boolean addSshKey(final String login, final String password, final String key) {
+        try {
+            Element element = request(login, password, "/ssh-keys/", true, Collections.singletonMap("key", key));
+            return element.getChildren("key").size() > 0;
         } catch (Exception e) {
             return false;
         }
