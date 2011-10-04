@@ -1,7 +1,6 @@
 package org.bitbucket.connectors.jetbrains.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -10,22 +9,18 @@ import org.bitbucket.connectors.jetbrains.RepositoryInfo;
 import javax.swing.*;
 import java.util.List;
 
-public class BitbucketCloneProjectDialog extends DialogWrapper {
+public class BitbucketCloneProjectDialog extends BitbucketDialog {
 
     private BitbucketCloneProjectPanel myPanel;
 
     public BitbucketCloneProjectDialog(final Project project, final List<RepositoryInfo> repos) {
-        super(project, true);
+        super(project);
         myPanel = new BitbucketCloneProjectPanel(this);
         setTitle(BitbucketBundle.message("select-clone-repository"));
         setOKButtonText(BitbucketBundle.message("clone"));
         myPanel.setAvailableRepos(repos);
         init();
         setOKActionEnabled(false);
-    }
-
-    protected Action[] createActions() {
-        return new Action[]{getOKAction(), getCancelAction()};
     }
 
     @Override

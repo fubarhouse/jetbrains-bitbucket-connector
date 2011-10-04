@@ -90,13 +90,6 @@ public class BitbucketCheckoutProvider implements CheckoutProvider {
 
         try {
             String repositoryUrl = repository != null ? repository.getCheckoutUrl() : checkoutDialog.getRepositoryUrl();
-            BitbucketSettings settings = BitbucketSettings.getInstance();
-            if (repository == null && repositoryUrl != null && repositoryUrl.startsWith("ssh:") && !BitbucketUtil.sshEnabled(project, settings.getLogin(), settings.getPassword())) {
-                if (!BitbucketUtil.addSshKey(project, settings.getLogin(), settings.getPassword())) {
-                    Messages.showErrorDialog(project, "Valid SSH key is required for SSH repository URL", "Checkout from Bitbucket");
-                    return;
-                }
-            }
             checkout(project, repositoryUrl, folder.getPath(), listener);
         } catch (URIException e) {
             Messages.showErrorDialog(project, e.getMessage(), BitbucketBundle.message("url-encode-err"));

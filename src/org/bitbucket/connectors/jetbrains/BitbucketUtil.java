@@ -15,7 +15,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
@@ -34,8 +33,10 @@ import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.*;
 import java.util.*;
+import java.util.List;
 
 public class BitbucketUtil {
 
@@ -193,7 +194,16 @@ public class BitbucketUtil {
         }
     }
 
-    public static boolean addSshKey(final Project project, final String login, final String password) {
+    /**
+     * Shows SSH key selection dialog and uploads the selected file as Bitbucket key
+     *
+     * @param project
+     * @param login
+     * @param password
+     *
+     * @return true if uploaded successfully, false on upload error, null on cancel
+     */
+    public static Boolean addSshKey(final Project project, final Component parentComponent, final String login, final String password) {
         FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
             @Override
             public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
@@ -215,25 +225,27 @@ public class BitbucketUtil {
                 }
             }
         }
-        descriptor.setTitle("Please choose SSH key");
+        descriptor.setTitle(BitbucketBundle.message("ssh-key-dialog-title"));
+        descriptor.setDescription(BitbucketBundle.message("ssh-key-dialog-desc"));
 
-        FileChooser.chooseFilesWithSlideEffect(descriptor, project, root, new Consumer< VirtualFile[]>() {
-            public void consume(VirtualFile[] virtualFiles) {
-                for (VirtualFile f: virtualFiles) {
-                    try {
-                        final String key = VfsUtil.loadText(f);
-                        executeWithProgressSynchronously(project, new Computable<Boolean>() {
-                            public Boolean compute() {
-                                return addSshKey(login, password, key);
-                            }
-                        });
-                    } catch (IOException e1) {
-                        Messages.showErrorDialog("Can't read SSH key: " + f.getPath(), "SSH key");
-                    }
+        VirtualFile[] files = FileChooser.chooseFiles(parentComponent, descriptor, root);
+        if (files.length == 0) {
+            return null;
+        }
+        VirtualFile f = files[0];
+
+        boolean result = false;
+        try {
+            final String key = VfsUtil.loadText(f);
+            result = executeWithProgressSynchronously(project, new Computable<Boolean>() {
+                public Boolean compute() {
+                    return addSshKey(login, password, key);
                 }
-            }
-        });
-        return sshEnabled(login, password);
+            });
+        } catch (IOException e1) {
+            Messages.showErrorDialog("Can't read SSH key: " + f.getPath(), "SSH key");
+        }
+        return result;
     }
 
     private static boolean addSshKey(final String login, final String password, final String key) {
@@ -377,5 +389,9 @@ public class BitbucketUtil {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    public static boolean isSshUrl(String url) {
+        return url != null && url.startsWith("ssh://");
     }
 }
