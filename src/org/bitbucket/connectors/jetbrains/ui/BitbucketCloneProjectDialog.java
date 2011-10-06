@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.bitbucket.connectors.jetbrains.BitbucketUtil;
 import org.bitbucket.connectors.jetbrains.RepositoryInfo;
 
 import javax.swing.*;
@@ -89,6 +90,11 @@ public class BitbucketCloneProjectDialog extends BitbucketDialog {
 
     public String getRepositoryUrl() {
         return myPanel.getRepositoryUrl();
+    }
+
+    @Override
+    public boolean isUseSsh() {
+        return BitbucketUtil.isSshUrl(myPanel.getRepositoryUrl());
     }
 
     public String getSelectedPath() {

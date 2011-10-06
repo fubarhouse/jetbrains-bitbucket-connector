@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketBundle;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketShareDialog;
 import org.jetbrains.annotations.NotNull;
@@ -61,10 +62,10 @@ public class BitbucketShareAction extends DumbAwareAction {
             return;
         }
 
-        share(project, dialog.getRepositoryName(), dialog.getDescription());
+        share(project, dialog.getRepositoryName(), dialog.getDescription(), dialog.isSshRepositoryAccess());
     }
 
-    private void share(Project project, String name, String description) {
+    private void share(Project project, String name, String description, boolean ssh) {
         VirtualFile root = project.getBaseDir();
         if (!ensureUnderMercurial(project, root)) {
             return;
@@ -72,7 +73,7 @@ public class BitbucketShareAction extends DumbAwareAction {
 
         refreshAndConfigureVcsMappings(project, root, "");
 
-        BitbucketUtil.share(project, root, name, description);
+        BitbucketUtil.share(project, root, name, description, ssh);
     }
 
     private boolean ensureUnderMercurial(final Project project, final VirtualFile root) {
@@ -93,7 +94,10 @@ public class BitbucketShareAction extends DumbAwareAction {
 
     private boolean createMercurialRepository(Project project, VirtualFile root) {
         try {
-            new HgInitCommand(project).execute(root, null);
+            new HgInitCommand(project).execute(root, new Consumer<Boolean>() {
+                public void consume(Boolean aBoolean) {
+                }
+            });
             new HgAddCommand(project).execute(getSourceFolders(project, root));
             new HgCommitCommand(project, root, BitbucketBundle.message("initial-rev-msg")).execute();
             return true;
@@ -104,7 +108,7 @@ public class BitbucketShareAction extends DumbAwareAction {
 
     private List<VirtualFile> getSourceFolders(Project project, VirtualFile root) {
         List<VirtualFile> result = new ArrayList<VirtualFile>();
-        for (VirtualFile src: ProjectRootManager.getInstance(project).getContentRoots()) {
+        for (VirtualFile src: ProjectRootManager.getInstance(project).getContentSourceRoots()) {
             result.add(src);
         }
         return result;

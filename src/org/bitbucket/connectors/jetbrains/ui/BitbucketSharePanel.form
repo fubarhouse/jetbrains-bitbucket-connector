@@ -43,14 +43,27 @@
           <text value="Description:"/>
         </properties>
       </component>
-      <component id="bc143" class="javax.swing.JCheckBox" binding="myPrivateCheckBox">
+      <grid id="1a12f" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="1">
         <constraints>
-          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
-        <properties>
-          <text value="Private"/>
-        </properties>
-      </component>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="bc143" class="javax.swing.JCheckBox" binding="myPrivateCheckBox">
+            <constraints/>
+            <properties>
+              <text value="Private"/>
+            </properties>
+          </component>
+          <component id="25943" class="javax.swing.JCheckBox" binding="mySshRepositoryAccessCheckBox" default-binding="true">
+            <constraints/>
+            <properties>
+              <text value="SSH repository access"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
     </children>
   </grid>
 </form>

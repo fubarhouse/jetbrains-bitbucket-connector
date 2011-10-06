@@ -287,15 +287,15 @@ public class BitbucketUtil {
         });
     }
 
-    public static void share(final Project project, final VirtualFile root, final String name, final String description) {
+    public static void share(final Project project, final VirtualFile root, final String name, final String description, final boolean ssh) {
         final RepositoryInfo[] repo = new RepositoryInfo[1];
         executeWithProgressSynchronously(project, BitbucketBundle.message("push-bitbucket", name), new Runnable() {
             public void run() {
                 BitbucketSettings settings = BitbucketSettings.getInstance();
-                RepositoryInfo repository = createBitbucketRepository(settings.getLogin(), settings.getPassword(), name, description, true);
+                RepositoryInfo repository = createBitbucketRepository(settings.getLogin(), settings.getPassword(), name, description, true, true);
                 if (repository != null) {
                     try {
-                        String repositoryUrl = repository.getCheckoutUrl();
+                        String repositoryUrl = repository.getCheckoutUrl(ssh);
                         new HgPushCommand(project, root, repositoryUrl).execute(new HgCommandResultHandler() {
                             public void process(@Nullable HgCommandResult result) {
                             }
@@ -375,13 +375,14 @@ public class BitbucketUtil {
         return parts.length > 0 ? parts[0].trim() : null;
     }
 
-    private static RepositoryInfo createBitbucketRepository(String login, String password, String name, String description, boolean isPrivate) {
+    private static RepositoryInfo createBitbucketRepository(String login, String password, String name, String description, boolean isPrivate, boolean hg) {
         Map<String, String> params = new HashMap<String, String>();
         params.put("name", name);
         params.put("description", description);
         if (isPrivate) {
             params.put("is_private", "True");
         }
+        params.put("scm", hg ? "hg" : "git");
 
         try {
             Element element = request(login, password, "/repositories/", true, params);
@@ -393,5 +394,23 @@ public class BitbucketUtil {
 
     public static boolean isSshUrl(String url) {
         return url != null && url.startsWith("ssh://");
+    }
+
+    public static boolean enableSsh(Project project, Component parent) {
+        BitbucketSettings instance = BitbucketSettings.getInstance();
+        if (!BitbucketUtil.sshEnabled(project, instance.getLogin(), instance.getPassword())) {
+            if (Messages.showOkCancelDialog(project, BitbucketBundle.message("ssh-key-required"), BitbucketBundle.message("ssh-key-title"), null) == Messages.OK) {
+                Boolean res = BitbucketUtil.addSshKey(project, parent, instance.getLogin(), instance.getPassword());
+                if (Boolean.FALSE.equals(res)) {
+                    Messages.showErrorDialog(project, BitbucketBundle.message("ssh-key-invalid"), BitbucketBundle.message("ssh-key-title"));
+                    return false;
+                } else if (res == null) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+        return true;
     }
 }
