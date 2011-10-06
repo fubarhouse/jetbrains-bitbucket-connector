@@ -37,17 +37,21 @@ public class RepositoryInfo implements Comparable<RepositoryInfo> {
     }
 
     private String calculateCheckoutUrl() throws URIException {
-        String name = getSlug();
-        String owner = getOwner();
-
         BitbucketSettings settings = BitbucketSettings.getInstance();
         boolean ssh = BitbucketUtil.sshEnabled(null, settings.getLogin(), settings.getPassword());
 
+        return getCheckoutUrl(ssh);
+    }
+
+    public String getCheckoutUrl(boolean ssh) throws URIException {
+        BitbucketSettings settings = BitbucketSettings.getInstance();
+
+        String name = getSlug();
+        String owner = getOwner();
         if (ssh) {
             return "ssh://hg@" + BitbucketUtil.BITBUCKET + "/" + owner + "/" + name;
         } else {
             String cred = URIUtil.encodeWithinAuthority(settings.getLogin()) + ":" + URIUtil.encodeWithinAuthority(settings.getPassword());
-
             return "https://" + cred + "@" + BitbucketUtil.BITBUCKET + "/" + owner + "/" + name;
         }
     }
