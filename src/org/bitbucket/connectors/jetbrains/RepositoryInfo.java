@@ -40,10 +40,10 @@ public class RepositoryInfo implements Comparable<RepositoryInfo> {
         BitbucketSettings settings = BitbucketSettings.getInstance();
         boolean ssh = BitbucketUtil.sshEnabled(null, settings.getLogin(), settings.getPassword());
 
-        return getCheckoutUrl(ssh);
+        return getCheckoutUrl(ssh, true);
     }
 
-    public String getCheckoutUrl(boolean ssh) throws URIException {
+    public String getCheckoutUrl(boolean ssh, boolean addPassword) throws URIException {
         BitbucketSettings settings = BitbucketSettings.getInstance();
 
         String name = getSlug();
@@ -51,7 +51,10 @@ public class RepositoryInfo implements Comparable<RepositoryInfo> {
         if (ssh) {
             return "ssh://hg@" + BitbucketUtil.BITBUCKET + "/" + owner + "/" + name;
         } else {
-            String cred = URIUtil.encodeWithinAuthority(settings.getLogin()) + ":" + URIUtil.encodeWithinAuthority(settings.getPassword());
+            String cred = URIUtil.encodeWithinAuthority(settings.getLogin());
+            if (addPassword) {
+                cred += ":" + URIUtil.encodeWithinAuthority(settings.getPassword());
+            }
             return "https://" + cred + "@" + BitbucketUtil.BITBUCKET + "/" + owner + "/" + name;
         }
     }
@@ -77,5 +80,10 @@ public class RepositoryInfo implements Comparable<RepositoryInfo> {
         } else {
             return isMy() ? -1 : 1;
         }
+    }
+
+    public boolean isCreating() {
+        Element state = myRepositoryElement.getChild("state");
+        return state != null && "creating".equals(state.getText());
     }
 }

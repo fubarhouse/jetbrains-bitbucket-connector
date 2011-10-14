@@ -72,8 +72,8 @@ public class BitbucketUtil {
             res = new GetMethod(url);
         }
         client.executeMethod(res);
-        InputStream stream = res.getResponseBodyAsStream();
-        return new SAXBuilder(false).build(stream).getRootElement();
+        String s = res.getResponseBodyAsString();
+        return new SAXBuilder(false).build(new StringReader(s)).getRootElement();
     }
 
     /**
@@ -293,14 +293,24 @@ public class BitbucketUtil {
             public void run() {
                 BitbucketSettings settings = BitbucketSettings.getInstance();
                 RepositoryInfo repository = createBitbucketRepository(settings.getLogin(), settings.getPassword(), name, description, true, true);
+                if (repository != null && repository.isCreating()) {
+                    if (!waitRepositoryAvailable(settings, name)) {
+                        return;
+                    }
+                }
+
                 if (repository != null) {
                     try {
-                        String repositoryUrl = repository.getCheckoutUrl(ssh);
+                        String repositoryUrl = repository.getCheckoutUrl(ssh, true);
                         new HgPushCommand(project, root, repositoryUrl).execute(new HgCommandResultHandler() {
                             public void process(@Nullable HgCommandResult result) {
+                                if (result != null) {
+                                    System.out.println(result.getRawOutput());
+                                    System.out.println(result.getRawError());
+                                }
                             }
                         });
-                        setRepositoryDefaultPath(root, repositoryUrl);
+                        setRepositoryDefaultPath(root, repository.getCheckoutUrl(ssh, false));
                         repo[0] = repository;
                     } catch (Exception e) {
                         throw new RuntimeException(e);
@@ -317,6 +327,19 @@ public class BitbucketUtil {
                 Messages.showErrorDialog(project, e.getMessage(), BitbucketBundle.message("url-encode-err"));
             }
         }
+    }
+
+    private static boolean waitRepositoryAvailable(BitbucketSettings settings, String name) {
+        RepositoryInfo r;
+        do {
+            try {
+                Thread.sleep(3000);
+                r = getRepository(settings.getLogin(), settings.getPassword(), name);
+            } catch (InterruptedException e) {
+                return false;
+            }
+        } while (r.isCreating());
+        return true;
     }
 
     private static void setRepositoryDefaultPath(VirtualFile root, String url) throws IOException {
@@ -386,6 +409,15 @@ public class BitbucketUtil {
 
         try {
             Element element = request(login, password, "/repositories/", true, params);
+            return new RepositoryInfo(element);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static RepositoryInfo getRepository(String login, String password, String name) {
+        try {
+            Element element = request(login, password, "/repositories/" + login + "/" + name + "/", false, null);
             return new RepositoryInfo(element);
         } catch (Exception e) {
             return null;
