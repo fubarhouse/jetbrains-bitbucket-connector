@@ -11,18 +11,16 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.ui.UIUtil;
 import org.apache.commons.httpclient.URIException;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketBundle;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketCloneProjectDialog;
+import org.bitbucket.connectors.jetbrains.vcs.GitHandler;
+import org.bitbucket.connectors.jetbrains.vcs.HgHandler;
+import org.bitbucket.connectors.jetbrains.vcs.VcsHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.command.HgCloneCommand;
-import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.provider.HgCheckoutProvider;
 
 import java.io.File;
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -89,14 +87,25 @@ public class BitbucketCheckoutProvider implements CheckoutProvider {
         RepositoryInfo repository = checkoutDialog.getSelectedRepository();
 
         try {
-            String repositoryUrl = repository != null ? repository.getCheckoutUrl() : checkoutDialog.getRepositoryUrl();
-            checkout(project, repositoryUrl, folder.getPath(), listener);
+            String repositoryUrl;
+            boolean git;
+            if (repository != null) {
+                repositoryUrl = repository.getCheckoutUrl();
+                git = repository.isGit();
+            } else {
+                repositoryUrl = checkoutDialog.getRepositoryUrl();
+                if (!BitbucketUtil.isSshUrl(repositoryUrl)) {
+                    // todo: add password
+                }
+                git = GitHandler.isGitUrl(repositoryUrl);
+            }
+            checkout(project, repositoryUrl, folder.getPath(), git, listener);
         } catch (URIException e) {
             Messages.showErrorDialog(project, e.getMessage(), BitbucketBundle.message("url-encode-err"));
         }
     }
 
-    private void checkout(final Project project, final String repositoryUrl, final String folder, final Listener listener) {
+    private void checkout(final Project project, final String repositoryUrl, final String folder, final boolean git, final Listener listener) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
                 FileDocumentManager.getInstance().saveAllDocuments();
@@ -105,54 +114,19 @@ public class BitbucketCheckoutProvider implements CheckoutProvider {
 
         new Task.Backgroundable(project, BitbucketBundle.message("checkouting"), true) {
             public void run(@NotNull ProgressIndicator progressIndicator) {
-                HgCloneCommand cmd = new HgCloneCommand(project);
-                cmd.setRepositoryURL(repositoryUrl);
-                cmd.setDirectory(folder);
-
-                try {
-                    HgCommandResult result = cmd.execute();
-
-                    if (result == null) {
-                        error(project, BitbucketBundle.message("clone-failed"), BitbucketBundle.message("clone-failed-unknown-err"));
-                    } else if (result.getExitValue() != 0) {
-                        error(project, BitbucketBundle.message("clone-failed"), BitbucketBundle.message("clone-failed-msg", repositoryUrl, result.getRawError() + "\n" + result.getRawOutput()));
-                    } else {
-                        ApplicationManager.getApplication().invokeLater(new Runnable() {
-                            public void run() {
-                                if (listener != null) {
-                                    listener.directoryCheckedOut(new File(folder));
-                                    listener.checkoutCompleted();
-                                }
+                VcsHandler vcsHandler = git ? new GitHandler() : new HgHandler();
+                if (vcsHandler.checkout(project, folder, repositoryUrl)) {
+                    ApplicationManager.getApplication().invokeLater(new Runnable() {
+                        public void run() {
+                            if (listener != null) {
+                                listener.directoryCheckedOut(new File(folder));
+                                listener.checkoutCompleted();
                             }
-                        });
-                    }
-                } finally {
-                    cleanupAuthDataFromHgrc(folder);
+                        }
+                    });
                 }
             }
         }.queue();
-    }
-
-    private static void cleanupAuthDataFromHgrc(String folder) {
-        try {
-            for (Method method: HgCheckoutProvider.class.getDeclaredMethods()) {
-                if ("cleanupAuthDataFromHgrc".equals(method.getName())) {
-                    method.setAccessible(true);
-                    method.invoke(null, folder);
-                    return;
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static void error(final Project project, final String title, final String msg) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-            public void run() {
-                Messages.showErrorDialog(project, msg, title);
-            }
-        });
     }
 
     public String getVcsName() {
