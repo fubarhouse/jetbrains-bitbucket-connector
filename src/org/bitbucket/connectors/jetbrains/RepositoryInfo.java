@@ -36,6 +36,10 @@ public class RepositoryInfo implements Comparable<RepositoryInfo> {
         return myCheckoutUrl;
     }
 
+    public boolean isGit() {
+        return "git".equals(myRepositoryElement.getChild("scm").getText());
+    }
+
     private String calculateCheckoutUrl() throws URIException {
         BitbucketSettings settings = BitbucketSettings.getInstance();
         boolean ssh = BitbucketUtil.sshEnabled(null, settings.getLogin(), settings.getPassword());
@@ -47,12 +51,16 @@ public class RepositoryInfo implements Comparable<RepositoryInfo> {
         BitbucketSettings settings = BitbucketSettings.getInstance();
 
         String name = getSlug();
+        if (isGit()) {
+            name += ".git";
+        }
         String owner = getOwner();
         if (ssh) {
-            return "ssh://hg@" + BitbucketUtil.BITBUCKET + "/" + owner + "/" + name;
+            String user = isGit() ? "git" : "hg";
+            return "ssh://" + user + "@" + BitbucketUtil.BITBUCKET + "/" + owner + "/" + name;
         } else {
             String cred = URIUtil.encodeWithinAuthority(settings.getLogin());
-            if (addPassword) {
+            if (addPassword && !isGit()) { // todo: provide password for GIT
                 cred += ":" + URIUtil.encodeWithinAuthority(settings.getPassword());
             }
             return "https://" + cred + "@" + BitbucketUtil.BITBUCKET + "/" + owner + "/" + name;

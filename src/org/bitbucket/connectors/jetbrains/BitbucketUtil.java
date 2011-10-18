@@ -23,14 +23,11 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketBundle;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketLoginDialog;
 import org.bitbucket.connectors.jetbrains.ui.HtmlMessageDialog;
+import org.bitbucket.connectors.jetbrains.vcs.VcsHandler;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.command.HgPushCommand;
-import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 
 import javax.swing.*;
 import java.awt.*;
@@ -287,7 +284,7 @@ public class BitbucketUtil {
         });
     }
 
-    public static void share(final Project project, final VirtualFile root, final String name, final String description, final boolean ssh) {
+    public static void share(final Project project, final VirtualFile root, final String name, final String description, final boolean ssh, final VcsHandler vcsHandler) {
         final RepositoryInfo[] repo = new RepositoryInfo[1];
         executeWithProgressSynchronously(project, BitbucketBundle.message("push-bitbucket", name), new Runnable() {
             public void run() {
@@ -302,15 +299,15 @@ public class BitbucketUtil {
                 if (repository != null) {
                     try {
                         String repositoryUrl = repository.getCheckoutUrl(ssh, true);
-                        new HgPushCommand(project, root, repositoryUrl).execute(new HgCommandResultHandler() {
-                            public void process(@Nullable HgCommandResult result) {
-                                if (result != null) {
-                                    System.out.println(result.getRawOutput());
-                                    System.out.println(result.getRawError());
-                                }
+
+                        if (!vcsHandler.push(project, root, repositoryUrl)) {
+                            Thread.sleep(30000);
+                            if (!vcsHandler.push(project, root, repositoryUrl)) {
+                                return;
                             }
-                        });
-                        setRepositoryDefaultPath(root, repository.getCheckoutUrl(ssh, false));
+                        }
+
+                        vcsHandler.setRepositoryDefaultUrl(root, repository.getCheckoutUrl(ssh, false));
                         repo[0] = repository;
                     } catch (Exception e) {
                         throw new RuntimeException(e);
@@ -340,62 +337,6 @@ public class BitbucketUtil {
             }
         } while (r.isCreating());
         return true;
-    }
-
-    private static void setRepositoryDefaultPath(VirtualFile root, String url) throws IOException {
-        File hgrc = new File(new File(root.getPath(), ".hg"), "hgrc");
-        if (!hgrc.exists()) {
-            hgrc.createNewFile();
-        }
-
-        List<String> lines = new ArrayList<String>();
-        List<String> pathLines = new ArrayList<String>();
-        BufferedReader reader = new BufferedReader(new FileReader(hgrc));
-        try {
-            String line;
-            boolean paths = false;
-            while ((line = reader.readLine()) != null) {
-                line = line.trim();
-                if (line.startsWith("[")) {
-                    paths = "[paths]".equals(line);
-                    if (!paths) {
-                        lines.add(line);
-                    }
-                    continue;
-                }
-
-                if (paths) {
-                    if (!"default".equals(getKey(line))) {
-                        pathLines.add(line);
-                    }
-                } else {
-                    lines.add(line);
-                }
-            }
-        } finally {
-            reader.close();
-        }
-
-        PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(hgrc, false)));
-        try {
-            writer.println("[paths]");
-            writer.println("default=" + url);
-
-            for (String line: pathLines) {
-                writer.println(line);
-            }
-
-            for (String line: lines) {
-                writer.println(line);
-            }
-        } finally {
-            writer.close();
-        }
-    }
-
-    private static String getKey(String s) {
-        String[] parts = s.split("=");
-        return parts.length > 0 ? parts[0].trim() : null;
     }
 
     private static RepositoryInfo createBitbucketRepository(String login, String password, String name, String description, boolean isPrivate, boolean hg) {
