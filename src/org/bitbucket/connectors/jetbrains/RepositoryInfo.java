@@ -67,6 +67,26 @@ public class RepositoryInfo implements Comparable<RepositoryInfo> {
         }
     }
 
+    public static String addPassword(String url, boolean git) {
+        if (url == null) {
+            return null;
+        }
+
+        int pos = url.indexOf("@");
+        if (pos != -1 && !git) {
+            int start = url.lastIndexOf("/", pos);
+            if (start != -1) {
+                String name = url.substring(start + 1, pos);
+                if (name.indexOf(":") != -1) {
+                    return url;
+                }
+            }
+            String password = BitbucketSettings.getInstance().getPassword();
+            return url.substring(0, pos) + ":" + password + url.substring(pos);
+        }
+        return url;
+    }
+
     public boolean isMy() {
         return BitbucketSettings.getInstance().getLogin().equals(getOwner());
     }

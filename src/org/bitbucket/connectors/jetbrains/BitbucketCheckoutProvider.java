@@ -95,7 +95,7 @@ public class BitbucketCheckoutProvider implements CheckoutProvider {
             } else {
                 repositoryUrl = checkoutDialog.getRepositoryUrl();
                 if (!BitbucketUtil.isSshUrl(repositoryUrl)) {
-                    // todo: add password
+                    repositoryUrl = RepositoryInfo.addPassword(repositoryUrl, false);
                 }
                 git = GitHandler.isGitUrl(repositoryUrl);
             }
