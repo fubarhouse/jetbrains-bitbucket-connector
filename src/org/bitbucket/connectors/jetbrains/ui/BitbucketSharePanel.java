@@ -19,6 +19,7 @@ public class BitbucketSharePanel {
     private JCheckBox myPrivateCheckBox;
     private JTextPane myDescriptionTextPane;
     private JCheckBox mySshRepositoryAccessCheckBox;
+    private JCheckBox myGITCheckBox;
 
     public BitbucketSharePanel(final BitbucketShareDialog dialog) {
         myNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -64,4 +65,15 @@ public class BitbucketSharePanel {
         }
     }
 
+    public boolean isGit() {
+        return myGITCheckBox.isSelected();
+    }
+
+    public void setGit(boolean select) {
+        myGITCheckBox.setSelected(select);
+    }
+
+    public void enableGit(boolean enable) {
+        myGITCheckBox.setEnabled(enable);
+    }
 }

@@ -94,4 +94,16 @@ public class BitbucketShareDialog extends BitbucketDialog {
     public boolean isUseSsh() {
         return myPanel.isSshRepositoryAccess();
     }
+
+    public boolean isGit() {
+        return myPanel.isGit();
+    }
+
+    public void setGit(boolean select) {
+        myPanel.setGit(select);
+    }
+
+    public void enableGit(boolean enable) {
+        myPanel.enableGit(enable);
+    }
 }
