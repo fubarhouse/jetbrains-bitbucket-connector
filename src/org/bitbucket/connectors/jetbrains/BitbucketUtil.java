@@ -28,10 +28,12 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.*;
 import java.util.List;
 
@@ -365,7 +367,7 @@ public class BitbucketUtil {
         }
     }
 
-    private static RepositoryInfo getRepository(String login, String password, String name) {
+    public static RepositoryInfo getRepository(String login, String password, String name) {
         try {
             Element element = request(login, password, "/repositories/" + login + "/" + name + "/", false, null);
             return new RepositoryInfo(element);

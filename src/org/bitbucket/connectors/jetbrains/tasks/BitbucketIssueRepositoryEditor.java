@@ -23,6 +23,7 @@ public class BitbucketIssueRepositoryEditor extends BaseRepositoryEditor<Bitbuck
 
     private final JComboBox mySelectRepositoryComboBox;
 
+
     public BitbucketIssueRepositoryEditor(final Project project, final BitbucketIssueRepository repository,
                                           Consumer<BitbucketIssueRepository> changeListener) {
         super(project, repository, changeListener);
@@ -84,6 +85,8 @@ public class BitbucketIssueRepositoryEditor extends BaseRepositoryEditor<Bitbuck
     public void apply() {
         if (mySelectRepositoryComboBox != null)
             myRepository.setRepositoryInfo((RepositoryInfo) mySelectRepositoryComboBox.getSelectedItem());
+
+
         super.apply();
     }
 }

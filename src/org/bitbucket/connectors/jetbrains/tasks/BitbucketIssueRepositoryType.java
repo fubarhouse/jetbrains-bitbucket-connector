@@ -2,6 +2,7 @@ package org.bitbucket.connectors.jetbrains.tasks;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.TaskState;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.tasks.impl.BaseRepositoryType;
 import com.intellij.util.Consumer;
@@ -9,6 +10,7 @@ import org.bitbucket.connectors.jetbrains.BitbucketUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.EnumSet;
 
 /**
  * Created by IntelliJ IDEA.
@@ -44,6 +46,11 @@ public class BitbucketIssueRepositoryType extends BaseRepositoryType<BitbucketIs
     public TaskRepositoryEditor createEditor(BitbucketIssueRepository repository, Project project,
                                              Consumer<BitbucketIssueRepository> changeListener) {
         return new BitbucketIssueRepositoryEditor(project, repository, changeListener);
+    }
+
+    @Override
+    public EnumSet<TaskState> getPossibleTaskStates() {
+        return EnumSet.of(TaskState.OPEN, TaskState.RESOLVED, TaskState.SUBMITTED);
     }
 
     @Override
