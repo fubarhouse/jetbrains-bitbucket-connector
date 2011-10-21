@@ -15,7 +15,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
@@ -24,18 +23,17 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketBundle;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketLoginDialog;
 import org.bitbucket.connectors.jetbrains.ui.HtmlMessageDialog;
+import org.bitbucket.connectors.jetbrains.vcs.VcsHandler;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.command.HgPushCommand;
-import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.*;
 import java.util.*;
+import java.util.List;
 
 public class BitbucketUtil {
     public static final String BITBUCKET = "Bitbucket";
@@ -80,8 +78,8 @@ public class BitbucketUtil {
             res = new GetMethod(url);
         }
         client.executeMethod(res);
-        InputStream stream = res.getResponseBodyAsStream();
-        return new SAXBuilder(false).build(stream).getRootElement();
+        String s = res.getResponseBodyAsString();
+        return new SAXBuilder(false).build(new StringReader(s)).getRootElement();
     }
 
     /**
@@ -202,7 +200,16 @@ public class BitbucketUtil {
         }
     }
 
-    public static boolean addSshKey(final Project project, final String login, final String password) {
+    /**
+     * Shows SSH key selection dialog and uploads the selected file as Bitbucket key
+     *
+     * @param project
+     * @param login
+     * @param password
+     *
+     * @return true if uploaded successfully, false on upload error, null on cancel
+     */
+    public static Boolean addSshKey(final Project project, final Component parentComponent, final String login, final String password) {
         FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
             @Override
             public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
@@ -224,25 +231,27 @@ public class BitbucketUtil {
                 }
             }
         }
-        descriptor.setTitle("Please choose SSH key");
+        descriptor.setTitle(BitbucketBundle.message("ssh-key-dialog-title"));
+        descriptor.setDescription(BitbucketBundle.message("ssh-key-dialog-desc"));
 
-        FileChooser.chooseFilesWithSlideEffect(descriptor, project, root, new Consumer< VirtualFile[]>() {
-            public void consume(VirtualFile[] virtualFiles) {
-                for (VirtualFile f: virtualFiles) {
-                    try {
-                        final String key = VfsUtil.loadText(f);
-                        executeWithProgressSynchronously(project, new Computable<Boolean>() {
-                            public Boolean compute() {
-                                return addSshKey(login, password, key);
-                            }
-                        });
-                    } catch (IOException e1) {
-                        Messages.showErrorDialog("Can't read SSH key: " + f.getPath(), "SSH key");
-                    }
+        VirtualFile[] files = FileChooser.chooseFiles(parentComponent, descriptor, root);
+        if (files.length == 0) {
+            return null;
+        }
+        VirtualFile f = files[0];
+
+        boolean result = false;
+        try {
+            final String key = VfsUtil.loadText(f);
+            result = executeWithProgressSynchronously(project, new Computable<Boolean>() {
+                public Boolean compute() {
+                    return addSshKey(login, password, key);
                 }
-            }
-        });
-        return sshEnabled(login, password);
+            });
+        } catch (IOException e1) {
+            Messages.showErrorDialog("Can't read SSH key: " + f.getPath(), "SSH key");
+        }
+        return result;
     }
 
     private static boolean addSshKey(final String login, final String password, final String key) {
@@ -284,20 +293,30 @@ public class BitbucketUtil {
         });
     }
 
-    public static void share(final Project project, final VirtualFile root, final String name, final String description) {
+    public static void share(final Project project, final VirtualFile root, final String name, final String description, final boolean ssh, final VcsHandler vcsHandler) {
         final RepositoryInfo[] repo = new RepositoryInfo[1];
         executeWithProgressSynchronously(project, BitbucketBundle.message("push-bitbucket", name), new Runnable() {
             public void run() {
                 BitbucketSettings settings = BitbucketSettings.getInstance();
-                RepositoryInfo repository = createBitbucketRepository(settings.getLogin(), settings.getPassword(), name, description, true);
+                RepositoryInfo repository = createBitbucketRepository(settings.getLogin(), settings.getPassword(), name, description, true, true);
+                if (repository != null && repository.isCreating()) {
+                    if (!waitRepositoryAvailable(settings, name)) {
+                        return;
+                    }
+                }
+
                 if (repository != null) {
                     try {
-                        String repositoryUrl = repository.getCheckoutUrl();
-                        new HgPushCommand(project, root, repositoryUrl).execute(new HgCommandResultHandler() {
-                            public void process(@Nullable HgCommandResult result) {
+                        String repositoryUrl = repository.getCheckoutUrl(ssh, true);
+
+                        if (!vcsHandler.push(project, root, repositoryUrl)) {
+                            Thread.sleep(30000);
+                            if (!vcsHandler.push(project, root, repositoryUrl)) {
+                                return;
                             }
-                        });
-                        setRepositoryDefaultPath(root, repositoryUrl);
+                        }
+
+                        vcsHandler.setRepositoryDefaultUrl(root, repository.getCheckoutUrl(ssh, false));
                         repo[0] = repository;
                     } catch (Exception e) {
                         throw new RuntimeException(e);
@@ -316,69 +335,27 @@ public class BitbucketUtil {
         }
     }
 
-    private static void setRepositoryDefaultPath(VirtualFile root, String url) throws IOException {
-        File hgrc = new File(new File(root.getPath(), ".hg"), "hgrc");
-        if (!hgrc.exists()) {
-            hgrc.createNewFile();
-        }
-
-        List<String> lines = new ArrayList<String>();
-        List<String> pathLines = new ArrayList<String>();
-        BufferedReader reader = new BufferedReader(new FileReader(hgrc));
-        try {
-            String line;
-            boolean paths = false;
-            while ((line = reader.readLine()) != null) {
-                line = line.trim();
-                if (line.startsWith("[")) {
-                    paths = "[paths]".equals(line);
-                    if (!paths) {
-                        lines.add(line);
-                    }
-                    continue;
-                }
-
-                if (paths) {
-                    if (!"default".equals(getKey(line))) {
-                        pathLines.add(line);
-                    }
-                } else {
-                    lines.add(line);
-                }
+    private static boolean waitRepositoryAvailable(BitbucketSettings settings, String name) {
+        RepositoryInfo r;
+        do {
+            try {
+                Thread.sleep(3000);
+                r = getRepository(settings.getLogin(), settings.getPassword(), name);
+            } catch (InterruptedException e) {
+                return false;
             }
-        } finally {
-            reader.close();
-        }
-
-        PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(hgrc, false)));
-        try {
-            writer.println("[paths]");
-            writer.println("default=" + url);
-
-            for (String line: pathLines) {
-                writer.println(line);
-            }
-
-            for (String line: lines) {
-                writer.println(line);
-            }
-        } finally {
-            writer.close();
-        }
+        } while (r.isCreating());
+        return true;
     }
 
-    private static String getKey(String s) {
-        String[] parts = s.split("=");
-        return parts.length > 0 ? parts[0].trim() : null;
-    }
-
-    private static RepositoryInfo createBitbucketRepository(String login, String password, String name, String description, boolean isPrivate) {
+    private static RepositoryInfo createBitbucketRepository(String login, String password, String name, String description, boolean isPrivate, boolean hg) {
         Map<String, String> params = new HashMap<String, String>();
         params.put("name", name);
         params.put("description", description);
         if (isPrivate) {
             params.put("is_private", "True");
         }
+        params.put("scm", hg ? "hg" : "git");
 
         try {
             Element element = request(login, password, "/repositories/", true, params);
@@ -386,5 +363,36 @@ public class BitbucketUtil {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private static RepositoryInfo getRepository(String login, String password, String name) {
+        try {
+            Element element = request(login, password, "/repositories/" + login + "/" + name + "/", false, null);
+            return new RepositoryInfo(element);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static boolean isSshUrl(String url) {
+        return url != null && url.startsWith("ssh://");
+    }
+
+    public static boolean enableSsh(Project project, Component parent) {
+        BitbucketSettings instance = BitbucketSettings.getInstance();
+        if (!BitbucketUtil.sshEnabled(project, instance.getLogin(), instance.getPassword())) {
+            if (Messages.showOkCancelDialog(project, BitbucketBundle.message("ssh-key-required"), BitbucketBundle.message("ssh-key-title"), null) == Messages.OK) {
+                Boolean res = BitbucketUtil.addSshKey(project, parent, instance.getLogin(), instance.getPassword());
+                if (Boolean.FALSE.equals(res)) {
+                    Messages.showErrorDialog(project, BitbucketBundle.message("ssh-key-invalid"), BitbucketBundle.message("ssh-key-title"));
+                    return false;
+                } else if (res == null) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+        return true;
     }
 }

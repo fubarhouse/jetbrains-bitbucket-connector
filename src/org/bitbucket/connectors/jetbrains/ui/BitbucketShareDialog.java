@@ -1,7 +1,6 @@
 package org.bitbucket.connectors.jetbrains.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 
 import javax.swing.*;
@@ -13,7 +12,7 @@ import java.util.regex.Pattern;
  * Date: Apr 16, 2011
  * Time: 11:07:02 AM
  */
-public class BitbucketShareDialog extends DialogWrapper {
+public class BitbucketShareDialog extends BitbucketDialog {
 
     private static final Pattern REPO_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_-]+");
 
@@ -83,7 +82,16 @@ public class BitbucketShareDialog extends DialogWrapper {
         return myPanel.isPrivate();
     }
 
+    public boolean isSshRepositoryAccess() {
+        return myPanel.isSshRepositoryAccess();
+    }
+
     public String getDescription() {
         return myPanel.getDescription();
+    }
+
+    @Override
+    public boolean isUseSsh() {
+        return myPanel.isSshRepositoryAccess();
     }
 }

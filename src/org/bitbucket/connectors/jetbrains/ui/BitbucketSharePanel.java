@@ -18,6 +18,7 @@ public class BitbucketSharePanel {
     private JTextField myNameTextField;
     private JCheckBox myPrivateCheckBox;
     private JTextPane myDescriptionTextPane;
+    private JCheckBox mySshRepositoryAccessCheckBox;
 
     public BitbucketSharePanel(final BitbucketShareDialog dialog) {
         myNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -46,6 +47,10 @@ public class BitbucketSharePanel {
 
     public boolean isPrivate() {
         return myPrivateCheckBox.isSelected();
+    }
+
+    public boolean isSshRepositoryAccess() {
+        return mySshRepositoryAccessCheckBox.isSelected();
     }
 
     public String getDescription() {

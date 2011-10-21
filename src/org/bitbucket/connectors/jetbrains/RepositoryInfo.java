@@ -36,20 +36,55 @@ public class RepositoryInfo implements Comparable<RepositoryInfo> {
         return myCheckoutUrl;
     }
 
-    private String calculateCheckoutUrl() throws URIException {
-        String name = getSlug();
-        String owner = getOwner();
+    public boolean isGit() {
+        return "git".equals(myRepositoryElement.getChild("scm").getText());
+    }
 
+    private String calculateCheckoutUrl() throws URIException {
         BitbucketSettings settings = BitbucketSettings.getInstance();
         boolean ssh = BitbucketUtil.sshEnabled(null, settings.getLogin(), settings.getPassword());
 
-        if (ssh) {
-            return "ssh://hg@" + BitbucketUtil.BITBUCKET_DN + "/" + owner + "/" + name;
-        } else {
-            String cred = URIUtil.encodeWithinAuthority(settings.getLogin()) + ":" + URIUtil.encodeWithinAuthority(settings.getPassword());
+        return getCheckoutUrl(ssh, true);
+    }
 
+    public String getCheckoutUrl(boolean ssh, boolean addPassword) throws URIException {
+        BitbucketSettings settings = BitbucketSettings.getInstance();
+
+        String name = getSlug();
+        if (isGit()) {
+            name += ".git";
+        }
+        String owner = getOwner();
+        if (ssh) {
+            String user = isGit() ? "git" : "hg";
+            return "ssh://" + user + "@" + BitbucketUtil.BITBUCKET_DN + "/" + owner + "/" + name;
+        } else {
+            String cred = URIUtil.encodeWithinAuthority(settings.getLogin());
+            if (addPassword && !isGit()) { // todo: provide password for GIT
+                cred += ":" + URIUtil.encodeWithinAuthority(settings.getPassword());
+            }
             return "https://" + cred + "@" + BitbucketUtil.BITBUCKET_DN + "/" + owner + "/" + name;
         }
+    }
+
+    public static String addPassword(String url, boolean git) {
+        if (url == null) {
+            return null;
+        }
+
+        int pos = url.indexOf("@");
+        if (pos != -1 && !git) {
+            int start = url.lastIndexOf("/", pos);
+            if (start != -1) {
+                String name = url.substring(start + 1, pos);
+                if (name.indexOf(":") != -1) {
+                    return url;
+                }
+            }
+            String password = BitbucketSettings.getInstance().getPassword();
+            return url.substring(0, pos) + ":" + password + url.substring(pos);
+        }
+        return url;
     }
 
     public boolean isMy() {
@@ -73,5 +108,10 @@ public class RepositoryInfo implements Comparable<RepositoryInfo> {
         } else {
             return isMy() ? -1 : 1;
         }
+    }
+
+    public boolean isCreating() {
+        Element state = myRepositoryElement.getChild("state");
+        return state != null && "creating".equals(state.getText());
     }
 }

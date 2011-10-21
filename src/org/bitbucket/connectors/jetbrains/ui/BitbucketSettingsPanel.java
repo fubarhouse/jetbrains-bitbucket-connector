@@ -25,6 +25,7 @@ public class BitbucketSettingsPanel {
 
     private JButton myTestButton;
     private JTextPane mySignupPane;
+    private JButton myAddSSHKeyButton;
 
     public BitbucketSettingsPanel() {
         String msg = BitbucketBundle.message("signup-on-bitbucket", "https://bitbucket.org/account/signup/");
@@ -44,6 +45,12 @@ public class BitbucketSettingsPanel {
                 Messages.showInfoMessage(
                         result ? BitbucketBundle.message("connection-success") : BitbucketBundle.message("cannot-login"),
                         result ? BitbucketBundle.message("success") : BitbucketBundle.message("failure"));
+            }
+        });
+
+        myAddSSHKeyButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                BitbucketUtil.addSshKey(ProjectManager.getInstance().getDefaultProject(), myPane, getLogin(), getPassword());
             }
         });
     }

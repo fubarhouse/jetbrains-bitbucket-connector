@@ -4,22 +4,18 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketBundle;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketShareDialog;
+import org.bitbucket.connectors.jetbrains.vcs.HgHandler;
+import org.bitbucket.connectors.jetbrains.vcs.VcsHandler;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.util.HgUtil;
-import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.command.HgAddCommand;
-import org.zmlx.hg4idea.command.HgCommitCommand;
-import org.zmlx.hg4idea.command.HgInitCommand;
 
 import java.util.*;
 
@@ -61,60 +57,26 @@ public class BitbucketShareAction extends DumbAwareAction {
             return;
         }
 
-        share(project, dialog.getRepositoryName(), dialog.getDescription());
+        share(project, dialog.getRepositoryName(), dialog.getDescription(), dialog.isSshRepositoryAccess());
     }
 
-    private void share(Project project, String name, String description) {
+    private void share(Project project, String name, String description, boolean ssh) {
         VirtualFile root = project.getBaseDir();
-        if (!ensureUnderMercurial(project, root)) {
+        VcsHandler vcsHandler = new HgHandler();
+        if (!vcsHandler.ensureUnderVcs(project, root)) {
             return;
         }
 
-        refreshAndConfigureVcsMappings(project, root, "");
+        refreshAndConfigureVcsMappings(project, root, "", vcsHandler.getVcs(project));
 
-        BitbucketUtil.share(project, root, name, description);
+        BitbucketUtil.share(project, root, name, description, ssh, vcsHandler);
     }
 
-    private boolean ensureUnderMercurial(final Project project, final VirtualFile root) {
-        VirtualFile hgRoot = HgUtil.getHgRootOrNull(project, root);
-        if (hgRoot == null) {
-            ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-                public void run() {
-                    createMercurialRepository(project, root);
-                }
-            }, BitbucketBundle.message("create-local-repository"), true, project);
-        } else {
-            if (hgRoot != root) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean createMercurialRepository(Project project, VirtualFile root) {
-        try {
-            new HgInitCommand(project).execute(root, null);
-            new HgAddCommand(project).execute(getSourceFolders(project, root));
-            new HgCommitCommand(project, root, BitbucketBundle.message("initial-rev-msg")).execute();
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private List<VirtualFile> getSourceFolders(Project project, VirtualFile root) {
-        List<VirtualFile> result = new ArrayList<VirtualFile>();
-        for (VirtualFile src: ProjectRootManager.getInstance(project).getContentRoots()) {
-            result.add(src);
-        }
-        return result;
-    }
-
-    public static void refreshAndConfigureVcsMappings(final Project project, final VirtualFile root, final String path) {
+    public static void refreshAndConfigureVcsMappings(final Project project, final VirtualFile root, final String path, final AbstractVcs vcs) {
         root.refresh(false, false);
-        ProjectLevelVcsManager vcs = ProjectLevelVcsManager.getInstance(project);
-        final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<VcsDirectoryMapping>(vcs.getDirectoryMappings());
-        VcsDirectoryMapping mapping = new VcsDirectoryMapping(path, HgVcs.getInstance(project).getName());
+        ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+        final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<VcsDirectoryMapping>(vcsManager.getDirectoryMappings());
+        VcsDirectoryMapping mapping = new VcsDirectoryMapping(path, vcs.getName());
         for (int i = 0; i < vcsDirectoryMappings.size(); i++) {
             VcsDirectoryMapping m = vcsDirectoryMappings.get(i);
             if (m.getDirectory().equals(path)) {
@@ -131,8 +93,8 @@ public class BitbucketShareAction extends DumbAwareAction {
         if (mapping != null) {
             vcsDirectoryMappings.add(mapping);
         }
-        vcs.setDirectoryMappings(vcsDirectoryMappings);
-        vcs.updateActiveVcss();
+        vcsManager.setDirectoryMappings(vcsDirectoryMappings);
+        vcsManager.updateActiveVcss();
         refreshFiles(project, Collections.singleton(root));
     }
 

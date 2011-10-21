@@ -1,15 +1,26 @@
 <idea-plugin version="2" url="https://bitbucket.org/atlassian/jetbrains-bitbucket-connector/">
   <name>Bitbucket</name>
   <id>org.bitbucket.connector</id>
-  <vendor url="http://bitbucket.org/" email="support@bitbucket.org" logo="/images/bitbucket.png">Bitbucket</vendor>
+  <version>1.1</version>
   <idea-version since-build="107.105"/>
   <description>The Bitbucket plugin enables you to checkout your existing Bitbucket repository and auto-open it as a project or share a project on Bitbucket instantly.</description>
-  <version>1.0.1</version>
+
+  <vendor logo="/org/bitbucket/connectors/jetbrains/res/bitbucket.png" url="http://bitbucket.org/" email="support@bitbucket.org">Bitbucket</vendor>
+
+  <change-notes><![CDATA[
+    <p>1.1
+        <ul>
+            <li>Checkout / publish project by SSH</li>
+            <li>Repository access by HTTP fix: if login or password contains special URL characters (?, &, =)</li>
+        </ul>
+    </p>
+  ]]></change-notes>
 
   <depends>com.intellij.modules.lang</depends>
   <depends optional="true" config-file="tasks.xml">com.intellij.tasks</depends>
     
   <depends>hg4idea</depends>
+  <depends>Git4Idea</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
