@@ -94,10 +94,10 @@ public class BitbucketCheckoutProvider implements CheckoutProvider {
                 git = repository.isGit();
             } else {
                 repositoryUrl = checkoutDialog.getRepositoryUrl();
-                if (!BitbucketUtil.isSshUrl(repositoryUrl)) {
+                git = GitHandler.isGitUrl(repositoryUrl);
+                if (!BitbucketUtil.isSshUrl(repositoryUrl) && !git) {
                     repositoryUrl = RepositoryInfo.addPassword(repositoryUrl, false);
                 }
-                git = GitHandler.isGitUrl(repositoryUrl);
             }
             checkout(project, repositoryUrl, folder.getPath(), git, listener);
         } catch (URIException e) {
