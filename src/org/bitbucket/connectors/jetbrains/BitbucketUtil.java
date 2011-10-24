@@ -36,8 +36,8 @@ import java.util.*;
 import java.util.List;
 
 public class BitbucketUtil {
-
-    public static final String BITBUCKET = "bitbucket.org";
+    public static final String BITBUCKET = "Bitbucket";
+    public static final String BITBUCKET_DN = "bitbucket.org";
     public static final Icon ICON = IconLoader.getIcon("res/bitbucket.png", BitbucketUtil.class);
 
     private static HttpClient getClient(String login, String password) {
@@ -50,7 +50,7 @@ public class BitbucketUtil {
     }
 
     public static Element request(String username, String password, String url, boolean post, Map<String, String> params) throws IOException, JDOMException {
-        url = "https://api." + BITBUCKET + "/1.0" + url + "?format=xml";
+        url = "https://api." + BITBUCKET_DN + "/1.0" + url + "?format=xml";
 
         HttpClient client = getClient(username, password);
         HttpMethod res;

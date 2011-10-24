@@ -31,7 +31,7 @@ public class BitbucketCloneProjectDialog extends BitbucketDialog {
 
     @Override
     protected String getHelpId() {
-        return "Bitbucket";
+        return BitbucketUtil.BITBUCKET;
     }
 
     @Override

@@ -57,10 +57,12 @@ public class RepositoryInfo implements Comparable<RepositoryInfo> {
         String owner = getOwner();
         if (ssh) {
             String user = isGit() ? "git" : "hg";
-            return "ssh://" + user + "@" + BitbucketUtil.BITBUCKET + "/" + owner + "/" + name;
+            return "ssh://" + user + "@" + BitbucketUtil.BITBUCKET_DN + "/" + owner + "/" + name;
         } else {
             String cred = URIUtil.encodeWithinAuthority(settings.getLogin()) + ":" + URIUtil.encodeWithinAuthority(settings.getPassword());
-            return "https://" + cred + "@" + BitbucketUtil.BITBUCKET + "/" + owner + "/" + name;
+
+            return "https://" + cred + "@" + BitbucketUtil.BITBUCKET_DN + "/" + owner + "/" + name;
+            return "https://" + cred + "@" + BitbucketUtil.BITBUCKET_DN + "/" + owner + "/" + name;
         }
     }
 

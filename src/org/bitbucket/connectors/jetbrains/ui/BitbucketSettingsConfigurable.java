@@ -23,7 +23,7 @@ public class BitbucketSettingsConfigurable implements SearchableConfigurable {
     }
 
     public String getDisplayName() {
-      return "Bitbucket";
+      return BitbucketUtil.BITBUCKET;
     }
 
     public Icon getIcon() {
