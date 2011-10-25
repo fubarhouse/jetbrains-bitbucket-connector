@@ -52,23 +52,11 @@ public class HgHandler implements VcsHandler {
         });
     }
 
-    public boolean ensureUnderVcs(final Project project, final VirtualFile root) {
-        VirtualFile hgRoot = HgUtil.getHgRootOrNull(project, root);
-        if (hgRoot == null) {
-            ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-                public void run() {
-                    createMercurialRepository(project, root);
-                }
-            }, BitbucketBundle.message("create-local-repository"), true, project);
-        } else {
-            if (hgRoot != root) {
-                return false;
-            }
-        }
-        return true;
+    public VirtualFile getRepositoryRoot(VirtualFile folder) {
+        return HgUtil.getNearestHgRoot(folder);
     }
 
-    private boolean createMercurialRepository(Project project, VirtualFile root) {
+    public boolean initRepository(Project project, VirtualFile root) {
         try {
             new HgInitCommand(project).execute(root, new Consumer<Boolean>() {
                 public void consume(Boolean aBoolean) {
@@ -104,7 +92,7 @@ public class HgHandler implements VcsHandler {
         }
     }
 
-    public void setRepositoryDefaultUrl(VirtualFile root, String repositoryUrl) throws IOException {
+    public void setRepositoryDefaultUrl(Project project, VirtualFile root, String repositoryUrl) throws IOException {
         File hgrc = new File(new File(root.getPath(), ".hg"), "hgrc");
         if (!hgrc.exists()) {
             hgrc.createNewFile();

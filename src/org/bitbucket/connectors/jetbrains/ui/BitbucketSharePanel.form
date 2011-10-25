@@ -62,6 +62,12 @@
               <text value="SSH repository access"/>
             </properties>
           </component>
+          <component id="73b0b" class="javax.swing.JCheckBox" binding="myGITCheckBox" default-binding="true">
+            <constraints/>
+            <properties>
+              <text value="GIT"/>
+            </properties>
+          </component>
         </children>
       </grid>
     </children>

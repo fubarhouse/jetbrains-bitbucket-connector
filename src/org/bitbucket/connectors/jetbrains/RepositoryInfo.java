@@ -60,6 +60,7 @@ public class RepositoryInfo implements Comparable<RepositoryInfo> {
             return "ssh://" + user + "@" + BitbucketUtil.BITBUCKET_DN + "/" + owner + "/" + name;
         } else {
             String cred = URIUtil.encodeWithinAuthority(settings.getLogin()) + ":" + URIUtil.encodeWithinAuthority(settings.getPassword());
+
             return "https://" + cred + "@" + BitbucketUtil.BITBUCKET_DN + "/" + owner + "/" + name;
         }
     }

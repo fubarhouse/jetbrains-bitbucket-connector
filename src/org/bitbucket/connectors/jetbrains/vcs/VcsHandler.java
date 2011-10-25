@@ -2,6 +2,7 @@ package org.bitbucket.connectors.jetbrains.vcs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -14,11 +15,13 @@ import java.io.IOException;
 public interface VcsHandler {
     boolean checkout(Project project, String folder, String repositoryUrl);
 
-    boolean push(Project project, VirtualFile root, String repositoryUrl);
+    boolean push(Project project, VirtualFile root, String repositoryUrl) throws VcsException;
 
-    void setRepositoryDefaultUrl(VirtualFile root, String repositoryUrl) throws IOException;
+    void setRepositoryDefaultUrl(Project project, VirtualFile root, String repositoryUrl) throws IOException;
 
-    boolean ensureUnderVcs(Project project, VirtualFile root);
+    VirtualFile getRepositoryRoot(VirtualFile folder);
+
+    boolean initRepository(Project project, VirtualFile root);
 
     AbstractVcs getVcs(Project project);
 }

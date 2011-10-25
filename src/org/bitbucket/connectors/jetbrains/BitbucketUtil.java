@@ -52,16 +52,11 @@ public class BitbucketUtil {
         return client;
     }
 
-    public static Element request(String username, String password, String url, boolean post, @Nullable Map<String, String> params) throws IOException, JDOMException {
-        return request(username, password, url, post, params, null);
-    }
+    public static Element request(String username, String password, String url, boolean post, Map<String, String> params) throws IOException, JDOMException {
 
 
-    public static Element request(String username, String password, String url, boolean post, @Nullable Map<String, String> params, @Nullable String query) throws IOException, JDOMException {
-        url = API_URL_BASE + url + "?format=xml";
+        url = "https://api." + BITBUCKET_DN + "/1.0" + url + "?format=xml";
 
-        if (query != null)
-            url = url + "&" + query;
 
         HttpClient client = getClient(username, password);
         HttpMethod res;
@@ -295,12 +290,12 @@ public class BitbucketUtil {
         });
     }
 
-    public static void share(final Project project, final VirtualFile root, final String name, final String description, final boolean ssh, final VcsHandler vcsHandler) {
+    public static void share(final Project project, final VirtualFile root, final String name, final String description, final boolean ssh, final boolean git, final VcsHandler vcsHandler) {
         final RepositoryInfo[] repo = new RepositoryInfo[1];
         executeWithProgressSynchronously(project, BitbucketBundle.message("push-bitbucket", name), new Runnable() {
             public void run() {
                 BitbucketSettings settings = BitbucketSettings.getInstance();
-                RepositoryInfo repository = createBitbucketRepository(settings.getLogin(), settings.getPassword(), name, description, true, true);
+                RepositoryInfo repository = createBitbucketRepository(settings.getLogin(), settings.getPassword(), name, description, true, git);
                 if (repository != null && repository.isCreating()) {
                     if (!waitRepositoryAvailable(settings, name)) {
                         return;
@@ -310,6 +305,7 @@ public class BitbucketUtil {
                 if (repository != null) {
                     try {
                         String repositoryUrl = repository.getCheckoutUrl(ssh, true);
+                        vcsHandler.setRepositoryDefaultUrl(project, root, repository.getCheckoutUrl(ssh, false));
 
                         if (!vcsHandler.push(project, root, repositoryUrl)) {
                             Thread.sleep(30000);
@@ -318,7 +314,6 @@ public class BitbucketUtil {
                             }
                         }
 
-                        vcsHandler.setRepositoryDefaultUrl(root, repository.getCheckoutUrl(ssh, false));
                         repo[0] = repository;
                     } catch (Exception e) {
                         throw new RuntimeException(e);
@@ -334,6 +329,8 @@ public class BitbucketUtil {
             } catch (URIException e) {
                 Messages.showErrorDialog(project, e.getMessage(), BitbucketBundle.message("url-encode-err"));
             }
+        } else {
+            Messages.showErrorDialog(project, BitbucketBundle.message("push-err"), BitbucketBundle.message("share-project-on-bitbucket"));
         }
     }
 
@@ -350,14 +347,14 @@ public class BitbucketUtil {
         return true;
     }
 
-    private static RepositoryInfo createBitbucketRepository(String login, String password, String name, String description, boolean isPrivate, boolean hg) {
+    private static RepositoryInfo createBitbucketRepository(String login, String password, String name, String description, boolean isPrivate, boolean git) {
         Map<String, String> params = new HashMap<String, String>();
         params.put("name", name);
         params.put("description", description);
         if (isPrivate) {
             params.put("is_private", "True");
         }
-        params.put("scm", hg ? "hg" : "git");
+        params.put("scm", git ? "git" : "hg");
 
         try {
             Element element = request(login, password, "/repositories/", true, params);
@@ -378,6 +375,10 @@ public class BitbucketUtil {
 
     public static boolean isSshUrl(String url) {
         return url != null && url.startsWith("ssh://");
+    }
+
+    public static boolean isHttpUrl(String url) {
+        return url != null && (url.startsWith("http://") || url.startsWith("https://"));
     }
 
     public static boolean enableSsh(Project project, Component parent) {
