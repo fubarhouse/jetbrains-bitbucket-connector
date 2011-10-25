@@ -53,10 +53,15 @@ public class BitbucketUtil {
     }
 
     public static Element request(String username, String password, String url, boolean post, Map<String, String> params) throws IOException, JDOMException {
+        return request(username, password, url, post, params, null);
+    }
 
 
-        url = "https://api." + BITBUCKET_DN + "/1.0" + url + "?format=xml";
+    public static Element request(String username, String password, String url, boolean post, @Nullable Map<String, String> params, @Nullable String query) throws IOException, JDOMException {
+        url = "https://api." + url + "?format=xml";
 
+        if (query != null)
+            url = url + "&" + query;
 
         HttpClient client = getClient(username, password);
         HttpMethod res;

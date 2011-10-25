@@ -94,7 +94,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
 
         log.info("getIssues for : " + url);
         String queryParameters = "status=new&status=open";
-
+    
         Element element =
                 BitbucketUtil.request(settings.getLogin(), settings.getPassword(), url, false, null, queryParameters);
 
