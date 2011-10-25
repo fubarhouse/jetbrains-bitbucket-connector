@@ -21,7 +21,7 @@ public class BitbucketIssueRepositoryEditor extends BaseRepositoryEditor<Bitbuck
     private static final Logger log =
             Logger.getInstance("#org.bitbucket.connectors.jetbrains.tasks.BitbucketIssueRepository");
 
-    private final JComboBox mySelectRepositoryComboBox;
+    private JComboBox mySelectRepositoryComboBox;
 
 
     public BitbucketIssueRepositoryEditor(final Project project, final BitbucketIssueRepository repository,
@@ -37,54 +37,65 @@ public class BitbucketIssueRepositoryEditor extends BaseRepositoryEditor<Bitbuck
         myUserNameText.setEditable(false);
         myUserNameText.setText(BitbucketSettings.getInstance().getLogin());
 
-        java.util.List<RepositoryInfo> repos = BitbucketUtil.getRepositories(project, false);
-        if (repos == null || repos.size() == 0) {
-            myCustomPanel.add(new JLabel(BitbucketBundle.message("no-repos-available")), BorderLayout.CENTER);
-            mySelectRepositoryComboBox = null;
-            return;
-        }
 
-        Collections.sort(repos);
-        mySelectRepositoryComboBox = new JComboBox(ArrayUtil.toObjectArray(repos));
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                java.util.List<RepositoryInfo> repos = BitbucketUtil.getRepositories(project, false);
+                if (repos == null || repos.size() == 0) {
+                    myCustomPanel.add(new JLabel(BitbucketBundle.message("no-repos-available")), BorderLayout.CENTER);
+                    mySelectRepositoryComboBox = null;
+                    return;
+                }
 
-        mySelectRepositoryComboBox
-                .setRenderer(new ListCellRendererWrapper<RepositoryInfo>(mySelectRepositoryComboBox.getRenderer()) {
-                    public void customize(JList list, RepositoryInfo value, int index, boolean selected,
-                                          boolean cellHasFocus) {
-                        if (value == null) return;
-                        setText(value.getOwner() + "/" + value.getName());
+                Collections.sort(repos);
+                mySelectRepositoryComboBox = new JComboBox(ArrayUtil.toObjectArray(repos));
+
+                mySelectRepositoryComboBox.setRenderer(
+                        new ListCellRendererWrapper<RepositoryInfo>(mySelectRepositoryComboBox.getRenderer()) {
+                            public void customize(JList list, RepositoryInfo value, int index, boolean selected,
+                                                  boolean cellHasFocus) {
+                                if (value == null) return;
+                                setText(value.getOwner() + "/" + value.getName());
+                            }
+                        });
+                mySelectRepositoryComboBox.setSelectedItem(repository.getRepositoryInfo());
+
+                mySelectRepositoryComboBox.addItemListener(new ItemListener() {
+                    public void itemStateChanged(ItemEvent e) {
+                        RepositoryInfo repositoryInfo = (RepositoryInfo) e.getItem();
+                        myURLText.setText((repositoryInfo != null ? createRepositoryUrl(repositoryInfo) : ""));
+                        apply();
                     }
                 });
-        mySelectRepositoryComboBox.setSelectedItem(repository.getRepositoryInfo());
 
-        mySelectRepositoryComboBox.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
-                RepositoryInfo repositoryInfo = (RepositoryInfo) e.getItem();
-                myURLText.setText((repositoryInfo != null ? createRepositoryUrl(repositoryInfo) : ""));
-                apply();
+                myCustomPanel.add(mySelectRepositoryComboBox, BorderLayout.CENTER);
+                myCustomLabel.add(new JLabel(BitbucketBundle.message("select-task-repository"), SwingConstants.RIGHT) {
+                    @Override
+                    public Dimension getPreferredSize() {
+                        final Dimension oldSize = super.getPreferredSize();
+                        final Dimension size = mySelectRepositoryComboBox.getPreferredSize();
+                        return new Dimension(oldSize.width, size.height);
+                    }
+                }, BorderLayout.CENTER);
+
+                myCustomPanel.invalidate();
+                myCustomPanel.validate();
             }
         });
 
-        myCustomPanel.add(mySelectRepositoryComboBox, BorderLayout.CENTER);
-        myCustomLabel.add(new JLabel(BitbucketBundle.message("select-task-repository"), SwingConstants.RIGHT) {
-            @Override
-            public Dimension getPreferredSize() {
-                final Dimension oldSize = super.getPreferredSize();
-                final Dimension size = mySelectRepositoryComboBox.getPreferredSize();
-                return new Dimension(oldSize.width, size.height);
-            }
-        }, BorderLayout.CENTER);
+
     }
 
     private String createRepositoryUrl(RepositoryInfo repositoryInfo) {
         return BitbucketUtil.API_URL_BASE + "/" + "repositories" + "/" + repositoryInfo.getOwner() + "/" +
-        repositoryInfo.getSlug();
+               repositoryInfo.getSlug();
     }
 
     @Override
     public void apply() {
         if (mySelectRepositoryComboBox != null)
             myRepository.setRepositoryInfo((RepositoryInfo) mySelectRepositoryComboBox.getSelectedItem());
+
 
 
         super.apply();
