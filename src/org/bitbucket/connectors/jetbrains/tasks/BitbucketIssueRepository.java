@@ -8,6 +8,7 @@ import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.pivotal.PivotalTrackerRepository;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.bitbucket.connectors.jetbrains.BitbucketSettings;
@@ -32,9 +33,9 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
 
     public BitbucketIssueRepository() {
         super();
-        final BitbucketSettings settings = BitbucketSettings.getInstance();
-        setRepositoryInfo(BitbucketUtil.getRepository(settings.getLogin(), settings.getPassword(), myRepoName));
-        log.info("Created repo: " + myRepositoryInfo.toString() );
+//        final BitbucketSettings settings = BitbucketSettings.getInstance();
+//        setRepositoryInfo(BitbucketUtil.getRepository(settings.getLogin(), settings.getPassword(), myRepoName));
+//        log.debug("Created repo: " + myRepositoryInfo.toString() );
     }
 
     protected BitbucketIssueRepository(BitbucketIssueRepositoryType type) {
@@ -44,11 +45,12 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
     public BitbucketIssueRepository(BitbucketIssueRepository other) {
         super(other);
         setRepositoryInfo(other.getRepositoryInfo());
+        setRepositoryName(other.getRepositoryName());
     }
 
     protected String myRepoName = null;
 
-    @Tag("Repo")
+    @Attribute("repo")
     public String getRepositoryName() {
         return myRepoName;
     }
@@ -59,6 +61,11 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
 
     @Transient
     public RepositoryInfo getRepositoryInfo() {
+        if (myRepositoryInfo == null) {
+            final BitbucketSettings settings = BitbucketSettings.getInstance();
+            setRepositoryInfo(BitbucketUtil.getRepository(settings.getLogin(), settings.getPassword(), myRepoName));
+        }
+
         return myRepositoryInfo;
     }
 
@@ -66,7 +73,8 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
         this.myRepositoryInfo = info;
         setUsername(BitbucketSettings.getInstance().getLogin());
         setPassword(BitbucketSettings.getInstance().getPassword());
-        setRepositoryName(info == null ? null : info.getSlug());
+        if (info != null)
+            setRepositoryName(info.getSlug());
     }
 
     private RepositoryInfo myRepositoryInfo = null;
@@ -74,7 +82,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
 
     @Override
     public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
-        log.info("getIssues: " + query);
+        log.debug("getIssues: " + query);
 
         @SuppressWarnings({"unchecked"}) List<Object> children = getIssues(query);
         if (children == null) return Task.EMPTY_ARRAY;
@@ -82,7 +90,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
         List<Task> taskList = ContainerUtil.mapNotNull(children, new NullableFunction<Object, Task>() {
             public Task fun(Object o) {
                 final Task issue = createIssue((Element) o);
-                log.info("Loaded Issue: " + issue);
+                log.debug("Loaded Issue: " + issue);
                 return issue;
             }
         });
@@ -99,7 +107,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
 
         String url = "/repositories/" + myRepositoryInfo.getOwner() + "/" + myRepositoryInfo.getSlug() + "/issues";
 
-        log.info("getIssues for : " + url);
+        log.debug("getIssues for : " + url);
         String queryParameters = "status=new&status=open";
 
         Element element =
@@ -117,7 +125,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
 
     @Nullable
     private Task createIssue(final Element element) {
-        log.info(element.getText());
+        log.debug(element.getText());
 
         if (myRepositoryInfo == null) return null;
         
@@ -169,7 +177,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
             @NotNull
             @Override
             public String getId() {
-                return repoSlug + ":" + id;
+                return "#" + id;
             }
 
             @NotNull
@@ -234,13 +242,10 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
     //https://api.bitbucket.org/1.0/repositories/sylvanaar2/lua-for-idea/issues/1
     @Override
     public Task findTask(String s) throws Exception {
-        log.info("Find Task:" + s);
+        log.debug("Find Task:" + s);
         final BitbucketSettings settings = BitbucketSettings.getInstance();
-        String[] parts = s.split(":");
-        if (parts.length < 2) return null;
 
-        String url = "/repositories/" + settings.getLogin() + "/" + parts[0] + "/issues/" + parts[1];
-
+        String url = "/repositories/" + settings.getLogin() + "/" + getRepositoryName() + "/issues/" + s.substring(1);
 
         Element element = BitbucketUtil.request(settings.getLogin(), settings.getPassword(), url, false, null);
 
@@ -256,12 +261,6 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
 
     @Nullable
     public String extractId(String taskName) {
-        return taskName.indexOf(':') > 0 ? taskName : null;
-    }
-
-    @Nullable
-    private String getRealId(String id) {
-        final String start = myRepositoryInfo.getSlug() + ":";
-        return id.startsWith(start) ? id.substring(start.length()) : null;
+        return taskName.substring(1);
     }
 }
