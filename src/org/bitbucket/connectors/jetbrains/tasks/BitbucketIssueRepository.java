@@ -234,7 +234,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
 
             @Override
             public String getPresentableName() {
-                return MessageFormat.format("{0}:{1} {2}", repoName, id, getSummary());
+                return MessageFormat.format("#{0}:{1} {2}", id, getSummary());
             }
         };
     }
