@@ -78,15 +78,15 @@ public class BitbucketIssueRepositoryEditor extends BaseRepositoryEditor<Bitbuck
                 });
 
 
-            for (int i = 0; i < mySelectRepositoryComboBox.getItemCount(); i++) {
-                RepositoryInfo r = (RepositoryInfo) mySelectRepositoryComboBox.getItemAt(i);
-                if (r == null) continue;
-                log.debug(r.toString());
-                if (r.getOwner().equals(repository.getUsername()) && r.getName().equals(repository.getRepositoryName())) {
-                    mySelectRepositoryComboBox.setSelectedIndex(i);
-                    break;
-                }
+        for (int i = 0; i < mySelectRepositoryComboBox.getItemCount(); i++) {
+            RepositoryInfo r = (RepositoryInfo) mySelectRepositoryComboBox.getItemAt(i);
+            if (r == null) continue;
+            log.debug(r.toString());
+            if (r.getOwner().equals(repository.getRepositoryOwner()) && r.getName().equals(repository.getRepositoryName())) {
+                mySelectRepositoryComboBox.setSelectedIndex(i);
+                break;
             }
+        }
         mySelectRepositoryComboBox.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 RepositoryInfo repositoryInfo = (RepositoryInfo) e.getItem();
@@ -119,6 +119,7 @@ public class BitbucketIssueRepositoryEditor extends BaseRepositoryEditor<Bitbuck
         if (mySelectRepositoryComboBox != null) {
             final RepositoryInfo info = ((RepositoryInfo) mySelectRepositoryComboBox.getSelectedItem());
             myRepository.setRepositoryName(info.getSlug());
+            myRepository.setRepositoryOwner(info.getOwner());
         }
         super.apply();
     }

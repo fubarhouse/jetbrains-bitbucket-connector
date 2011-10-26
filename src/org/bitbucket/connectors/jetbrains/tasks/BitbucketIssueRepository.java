@@ -40,6 +40,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
     public BitbucketIssueRepository(BitbucketIssueRepository other) {
         super(other);
         setRepositoryName(other.getRepositoryName());
+        setRepositoryOwner(other.getRepositoryOwner());
     }
 
     protected String myRepoName = null;
@@ -53,6 +54,16 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
         myRepoName = s;
     }
 
+    protected String myRepoOwner = null;
+    
+    @Attribute("owner")
+    public String getRepositoryOwner() {
+        return myRepoOwner;
+    }
+
+    public void setRepositoryOwner(String s) {
+        myRepoOwner = s;
+    }
     @Override
     public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
         log.debug("getIssues: " + query);
@@ -78,7 +89,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
         final BitbucketSettings settings = BitbucketSettings.getInstance();
 
 
-        String url = "/repositories/" + settings.getLogin() + "/" + getRepositoryName() + "/issues";
+        String url = "/repositories/" + getRepositoryOwner() + "/" + getRepositoryName() + "/issues";
 
         log.debug("getIssues for : " + url);
         String queryParameters = "status=new&status=open";
@@ -218,7 +229,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
         log.debug("Find Task:" + s);
         final BitbucketSettings settings = BitbucketSettings.getInstance();
 
-        String url = "/repositories/" + settings.getLogin() + "/" + getRepositoryName() + "/issues/" + s;
+        String url = "/repositories/" + getRepositoryOwner() + "/" + getRepositoryName() + "/issues/" + s;
 
         Element element = BitbucketUtil.request(settings.getLogin(), settings.getPassword(), url, false, null);
 
@@ -245,6 +256,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
 
     @Override
     public String toString() {
-        return "BitbucketIssueRepository{" + "myRepoName='" + myRepoName + '\'' + '}';
+        return "BitbucketIssueRepository{" + "myRepoName='" + myRepoName + '\'' + ", myRepoOwner='" + myRepoOwner +
+               '\'' + '}';
     }
 }
