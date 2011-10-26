@@ -52,7 +52,7 @@ public class BitbucketUtil {
         return client;
     }
 
-    public static Element request(String username, String password, String url, boolean post, Map<String, String> params) throws IOException, JDOMException {
+    public static Element request(String username, String password, String url, boolean post, @Nullable Map<String, String> params) throws IOException, JDOMException {
         return request(username, password, url, post, params, null);
     }
 
