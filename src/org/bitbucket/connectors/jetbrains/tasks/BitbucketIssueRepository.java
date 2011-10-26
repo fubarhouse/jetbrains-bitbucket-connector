@@ -131,7 +131,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
         final boolean isClosed = taskState.equals(TaskState.RESOLVED);
 
         //  /1.0/repositories/sylvanaar2/lua-for-idea/issues/79
-        final String issueUrl = element.getChildText("resource_uri").replace("/1.0/repositories", "");
+        final String issueUrl = element.getChildText("resource_uri").replace("/1.0/repositories", "").replace("/issues/", "/issue/");
 
 
         return new LocalTaskImpl(new Task() {
