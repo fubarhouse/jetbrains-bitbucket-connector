@@ -1,6 +1,5 @@
 package org.bitbucket.connectors.jetbrains.vcs;
 
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -35,13 +34,22 @@ public class HgHandler implements VcsHandler {
         HgCommandResult result = cmd.execute();
 
         if (result == null) {
+            deleteEmptyFolder(folder);
             error(project, BitbucketBundle.message("clone-failed"), BitbucketBundle.message("clone-failed-unknown-err"));
             return false;
         } else if (result.getExitValue() != 0) {
+            deleteEmptyFolder(folder);
             error(project, BitbucketBundle.message("clone-failed"), BitbucketBundle.message("clone-failed-msg", repositoryUrl, result.getRawError() + "\n" + result.getRawOutput()));
             return false;
         }
         return true;
+    }
+
+    private void deleteEmptyFolder(String folder) {
+        File f = new File(folder);
+        if (f.exists() && f.isDirectory() && f.list().length == 0) {
+            f.delete();
+        }
     }
 
     private static void error(final Project project, final String title, final String msg) {
