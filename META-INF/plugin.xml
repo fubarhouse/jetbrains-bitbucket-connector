@@ -12,6 +12,7 @@
         <ul>
             <li>Checkout / publish project by SSH</li>
             <li>Repository access by HTTP fix: if login or password contains special URL characters (?, &, =)</li>
+            <li>Bitbucket tasks integration</li>
         </ul>
     </p>
   ]]></change-notes>
