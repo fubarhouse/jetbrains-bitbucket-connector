@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.util.SystemProperties;
 import org.apache.commons.httpclient.URIException;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketBundle;
@@ -21,6 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -114,12 +117,12 @@ public class BitbucketCheckoutProvider implements CheckoutProvider {
 
         new Task.Backgroundable(project, BitbucketBundle.message("checkouting"), true) {
             public void run(@NotNull ProgressIndicator progressIndicator) {
-                VcsHandler vcsHandler = git ? new GitHandler() : new HgHandler();
+                final VcsHandler vcsHandler = git ? new GitHandler() : new HgHandler();
                 if (vcsHandler.checkout(project, folder, repositoryUrl)) {
                     ApplicationManager.getApplication().invokeLater(new Runnable() {
                         public void run() {
                             if (listener != null) {
-                                listener.directoryCheckedOut(new File(folder));
+                                directoryCheckedOut(listener, new File(folder), vcsHandler.getVcs(project).getKeyInstanceMethod());
                                 listener.checkoutCompleted();
                             }
                         }
@@ -127,6 +130,22 @@ public class BitbucketCheckoutProvider implements CheckoutProvider {
                 }
             }
         }.queue();
+    }
+
+    private void directoryCheckedOut(Listener listener, File folder, VcsKey vcsKey) {
+        for (Method m: listener.getClass().getDeclaredMethods()) {
+            if ("directoryCheckedOut".equals(m.getName())) {
+                Object[] params = m.getParameterTypes().length == 2 ?
+                        new Object[] { folder, vcsKey } : // new API
+                        new Object[] { folder }; // old API
+                try {
+                    m.invoke(listener, params);
+                    return;
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
     }
 
     public String getVcsName() {
