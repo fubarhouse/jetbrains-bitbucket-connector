@@ -9,7 +9,9 @@
 
   <change-notes><![CDATA[
     <p>1.1.1
-        <ul>directoryCheckedOut fix: new VCS API support (PHP Storm 3 etc)
+        <ul>
+            <li>directoryCheckedOut fix: new VCS API support (PHP Storm 3 etc)</li>
+        </ul>
     </p>
     <p>1.1
         <ul>
