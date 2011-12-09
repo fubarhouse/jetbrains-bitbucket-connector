@@ -148,6 +148,11 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
         return new LocalTaskImpl(new Task() {
 
             @Override
+            public String getCustomIcon() {
+                return null;
+            }
+
+            @Override
             public boolean isIssue() {
                 return true;
             }
