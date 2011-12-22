@@ -263,4 +263,10 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
         return "BitbucketIssueRepository{" + "myRepoName='" + myRepoName + '\'' + ", myRepoOwner='" + myRepoOwner +
                '\'' + '}';
     }
+
+    @Override
+    public String getUrl() {
+        return BitbucketUtil.API_URL_BASE + "/" + "repositories" + "/" + getRepositoryOwner() + "/" +
+               getRepositoryName();
+    }
 }

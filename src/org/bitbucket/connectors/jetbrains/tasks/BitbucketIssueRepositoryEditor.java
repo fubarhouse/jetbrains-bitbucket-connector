@@ -87,10 +87,11 @@ public class BitbucketIssueRepositoryEditor extends BaseRepositoryEditor<Bitbuck
                 break;
             }
         }
+        if (mySelectRepositoryComboBox.getSelectedIndex() != -1) {
+            mySelectRepositoryComboBox.setSelectedIndex(0);
+        }
         mySelectRepositoryComboBox.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
-                RepositoryInfo repositoryInfo = (RepositoryInfo) e.getItem();
-                myURLText.setText((repositoryInfo != null ? createRepositoryUrl(repositoryInfo) : ""));
                 apply();
             }
         });
@@ -107,11 +108,6 @@ public class BitbucketIssueRepositoryEditor extends BaseRepositoryEditor<Bitbuck
 
         myCustomPanel.doLayout();
         return false;
-    }
-
-    private String createRepositoryUrl(RepositoryInfo repositoryInfo) {
-        return BitbucketUtil.API_URL_BASE + "/" + "repositories" + "/" + repositoryInfo.getOwner() + "/" +
-               repositoryInfo.getSlug();
     }
 
     @Override
