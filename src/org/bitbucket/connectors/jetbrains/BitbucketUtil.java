@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.net.HttpConfigurable;
 import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -48,6 +49,15 @@ public class BitbucketUtil {
         UsernamePasswordCredentials cred = new UsernamePasswordCredentials(login, password);
         client.getParams().setAuthenticationPreemptive(true);
         client.getState().setCredentials(AuthScope.ANY, cred);
+
+        HttpConfigurable proxyConfig = HttpConfigurable.getInstance();
+        if (proxyConfig.USE_HTTP_PROXY) {
+            client.getHostConfiguration().setProxy(proxyConfig.PROXY_HOST, proxyConfig.PROXY_PORT);
+            if (proxyConfig.PROXY_AUTHENTICATION) {
+                UsernamePasswordCredentials proxyCred = new UsernamePasswordCredentials(proxyConfig.PROXY_LOGIN, proxyConfig.getPlainProxyPassword());
+                client.getState().setProxyCredentials(AuthScope.ANY, proxyCred);
+            }
+        }
 
         return client;
     }
