@@ -89,6 +89,7 @@ public class BitbucketIssueRepositoryEditor extends BaseRepositoryEditor<Bitbuck
         }
         if (mySelectRepositoryComboBox.getSelectedIndex() != -1) {
             mySelectRepositoryComboBox.setSelectedIndex(0);
+            apply();
         }
         mySelectRepositoryComboBox.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
