@@ -82,12 +82,12 @@ public class BitbucketIssueRepositoryEditor extends BaseRepositoryEditor<Bitbuck
             RepositoryInfo r = (RepositoryInfo) mySelectRepositoryComboBox.getItemAt(i);
             if (r == null) continue;
             log.debug(r.toString());
-            if (r.getOwner().equals(repository.getRepositoryOwner()) && r.getName().equals(repository.getRepositoryName())) {
+            if (r.getOwner().equals(repository.getRepositoryOwner()) && r.getSlug().equals(repository.getRepositoryName())) {
                 mySelectRepositoryComboBox.setSelectedIndex(i);
                 break;
             }
         }
-        if (mySelectRepositoryComboBox.getSelectedIndex() != -1) {
+        if (mySelectRepositoryComboBox.getSelectedIndex() == -1) {
             mySelectRepositoryComboBox.setSelectedIndex(0);
             apply();
         }
