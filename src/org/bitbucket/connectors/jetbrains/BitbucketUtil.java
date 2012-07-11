@@ -312,7 +312,7 @@ public class BitbucketUtil {
                 BitbucketSettings settings = BitbucketSettings.getInstance();
                 RepositoryInfo repository = createBitbucketRepository(settings.getLogin(), settings.getPassword(), name, description, true, git);
                 if (repository != null && repository.isCreating()) {
-                    if (!waitRepositoryAvailable(settings, name)) {
+                    if (!waitRepositoryAvailable(settings, repository.getSlug())) {
                         return;
                     }
                 }
