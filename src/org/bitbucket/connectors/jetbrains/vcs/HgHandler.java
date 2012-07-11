@@ -82,17 +82,17 @@ public class HgHandler implements VcsHandler {
         final Boolean[] res = new Boolean[1];
         new HgPushCommand(project, root, repositoryUrl).execute(new HgCommandResultHandler() {
             public void process(@Nullable HgCommandResult result) {
-                if (result != null) {
-                    res[0] = result.getExitValue() == 0;
-                }
-                synchronized (res) {
+                synchronized (this) {
+                    res[0] = result != null && result.getExitValue() == 0;
                     res.notify();
                 }
             }
         });
         try {
-            synchronized (res) {
-                res.wait();
+            synchronized (this) {
+                if (res[0] == null) {
+                    res.wait();
+                }
             }
             return res[0] == Boolean.TRUE;
         } catch (InterruptedException e) {
