@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
  */
 public class BitbucketShareDialog extends BitbucketDialog {
 
-    private static final Pattern REPO_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_-]+");
+    private static final Pattern REPO_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_-]+([ ]+[a-zA-Z0-9_-]+)*");
 
     private Set<String> myRepositories;
     private BitbucketSharePanel myPanel;

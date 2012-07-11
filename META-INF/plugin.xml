@@ -8,6 +8,12 @@
   <vendor logo="/org/bitbucket/connectors/jetbrains/res/bitbucket.png" url="http://bitbucket.org/" email="support@bitbucket.org">Bitbucket</vendor>
 
   <change-notes><![CDATA[
+    <p>1.1.7
+        <ul>
+            <li>Share repository fix: capital letters support</li>
+            <li>Share repository: allow spaces in the name</li>
+        </ul>
+    </p>
     <p>1.1.6
         <ul>
             <li>Share repository fix: progress hangs</li>
