@@ -18,8 +18,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.lang.reflect.Method;
 import java.text.MessageFormat;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -127,7 +129,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
         final String description = element.getChildText("content");
         final Ref<Date> created = new Ref<Date>();
         try {
-            created.set(PivotalTrackerRepository.parseDate(element, "created_on"));
+            created.set(parseDate(element, "created_on"));
         } catch (ParseException e) {
             log.warn(e);
         }
@@ -225,6 +227,25 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
                 return MessageFormat.format("#{0}: {1}", getId(), getSummary());
             }
         });
+    }
+
+    private static Date parseDate(final Element element, final String name) throws ParseException {
+        try {
+            return (Date) getParseDateMethod().invoke(null, element, name);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static @NotNull Method getParseDateMethod() {
+        final Class[] PARAMETER_TYPES = new Class[] { Element.class, String.class };
+        for (Method method: PivotalTrackerRepository.class.getMethods()) {
+            if ("parseDate".equals(method.getName()) && Arrays.equals(PARAMETER_TYPES, method.getParameterTypes())) {
+                method.setAccessible(true);
+                return method;
+            }
+        }
+        throw new RuntimeException("Can't find PivotalTrackerRepository.parseDate(Element, String) method");
     }
 
     //https://api.bitbucket.org/1.0/repositories/sylvanaar2/lua-for-idea/issues/1
