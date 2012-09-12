@@ -6,6 +6,7 @@ import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.LocalTaskImpl;
+import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.pivotal.PivotalTrackerRepository;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -231,13 +232,19 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
 
     private static Date parseDate(final Element element, final String name) throws ParseException {
         try {
-            return (Date) getParseDateMethod().invoke(null, element, name);
+            Method parseDateMethod = getParseDateMethod();
+            if (parseDateMethod != null) {
+                return (Date) parseDateMethod.invoke(null, element, name);
+            } else { // fix for newer versions without PivotalTrackerRepository.parseDate() method
+                String val = element.getChildText(name);
+                return TaskUtil.parseDate(val);
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    private static @NotNull Method getParseDateMethod() {
+    private static Method getParseDateMethod() {
         final Class[] PARAMETER_TYPES = new Class[] { Element.class, String.class };
         for (Method method: PivotalTrackerRepository.class.getMethods()) {
             if ("parseDate".equals(method.getName()) && Arrays.equals(PARAMETER_TYPES, method.getParameterTypes())) {
@@ -245,7 +252,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
                 return method;
             }
         }
-        throw new RuntimeException("Can't find PivotalTrackerRepository.parseDate(Element, String) method");
+        return null;
     }
 
     //https://api.bitbucket.org/1.0/repositories/sylvanaar2/lua-for-idea/issues/1
