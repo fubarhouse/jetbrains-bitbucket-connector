@@ -1,8 +1,10 @@
 package org.bitbucket.connectors.jetbrains.vcs;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
@@ -11,6 +13,7 @@ import org.bitbucket.connectors.jetbrains.ui.BitbucketBundle;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.*;
+import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -64,32 +67,55 @@ public class HgHandler implements VcsHandler {
         return HgUtil.getNearestHgRoot(folder);
     }
 
-    public boolean initRepository(Project project, VirtualFile root) {
-        try {
-            new HgInitCommand(project).execute(root, new Consumer<Boolean>() {
-                public void consume(Boolean aBoolean) {
+    public boolean initRepository(final Project project, final VirtualFile root) {
+        new HgInitCommand(project).execute(root, new Consumer<Boolean>() {
+            public void consume(Boolean aBoolean) {
+            }
+        });
+
+        final Exception[] exc = new Exception[1];
+
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+            public void run() {
+                ProgressManager.getInstance().getProgressIndicator().setText(BitbucketBundle.message("share-project-on-bitbucket"));
+                new HgAddCommand(project).execute(ProjectUtil.getSourceFolders(project, root));
+                try {
+                    new HgCommitCommand(project, root, BitbucketBundle.message("initial-rev-msg")).execute();
+                } catch (HgCommandException e) {
+                    exc[0] = e;
+                } catch (VcsException e) {
+                    exc[0] = e;
                 }
-            });
-            new HgAddCommand(project).execute(ProjectUtil.getSourceFolders(project, root));
-            new HgCommitCommand(project, root, BitbucketBundle.message("initial-rev-msg")).execute();
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+            }
+        }, BitbucketBundle.message("create-local-repository"), true, project);
+
+        return exc[0] == null;
     }
 
-    public boolean push(Project project, VirtualFile root, String repositoryUrl) {
+    public boolean push(final Project project, final VirtualFile root, final String repositoryUrl) {
+        final Boolean[] result = new Boolean[1];
+
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+            public void run() {
+                result[0] = doPush(project, root, repositoryUrl);
+            }
+        }, BitbucketBundle.message("push-bitbucket"), true, project);
+
+        return Boolean.TRUE.equals(result[0]);
+    }
+
+    private boolean doPush(Project project, VirtualFile root, String repositoryUrl) {
         final Boolean[] res = new Boolean[1];
         new HgPushCommand(project, root, repositoryUrl).execute(new HgCommandResultHandler() {
             public void process(@Nullable HgCommandResult result) {
-                synchronized (this) {
+                synchronized (res) {
                     res[0] = result != null && result.getExitValue() == 0;
                     res.notify();
                 }
             }
         });
         try {
-            synchronized (this) {
+            synchronized (res) {
                 if (res[0] == null) {
                     res.wait();
                 }

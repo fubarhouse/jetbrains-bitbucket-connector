@@ -4,7 +4,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -79,11 +78,7 @@ public class BitbucketShareAction extends DumbAwareAction {
 
         VirtualFile vcsRoot = vcsHandler.getRepositoryRoot(root);
         if (vcsRoot == null) {
-            ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-                public void run() {
-                    vcsHandler.initRepository(project, root);
-                }
-            }, BitbucketBundle.message("create-local-repository"), true, project);
+            vcsHandler.initRepository(project, root);
         } else if (vcsRoot != root) {
             Messages.showErrorDialog(project, BitbucketBundle.message("publish-part-err"), BitbucketBundle.message("share-project-on-bitbucket"));
             return;

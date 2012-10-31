@@ -316,28 +316,24 @@ public class BitbucketUtil {
                         return;
                     }
                 }
-
-                if (repository != null) {
-                    try {
-                        String repositoryUrl = repository.getCheckoutUrl(ssh, true);
-                        vcsHandler.setRepositoryDefaultUrl(project, root, repository.getCheckoutUrl(ssh, false));
-
-                        if (!vcsHandler.push(project, root, repositoryUrl)) {
-                            Thread.sleep(30000);
-                            if (!vcsHandler.push(project, root, repositoryUrl)) {
-                                return;
-                            }
-                        }
-
-                        repo[0] = repository;
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }
+                repo[0] = repository;
             }
         });
         RepositoryInfo repository = repo[0];
         if (repository != null) {
+            try {
+                String repositoryUrl = repository.getCheckoutUrl(ssh, true);
+                vcsHandler.setRepositoryDefaultUrl(project, root, repository.getCheckoutUrl(ssh, false));
+
+                if (!vcsHandler.push(project, root, repositoryUrl)) {
+                    Thread.sleep(30000);
+                    if (!vcsHandler.push(project, root, repositoryUrl)) {
+                        return;
+                    }
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
             try {
                 HtmlMessageDialog dialog = new HtmlMessageDialog(project, BitbucketBundle.message("project-shared", name, repository.getCheckoutUrl()), BitbucketBundle.message("share-project-on-bitbucket"));
                 dialog.show();
