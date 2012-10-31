@@ -24,9 +24,10 @@ import java.util.Collection;
  */
 public class GitHandler implements VcsHandler {
 
-    public boolean checkout(Project project, String folder, String repositoryUrl) {
-        GitSimpleHandler handler = new GitSimpleHandler(project, new File(folder), GitCommand.CLONE);
-        handler.addParameters(repositoryUrl);
+    public boolean checkout(Project project, String folderPath, String repositoryUrl) {
+        File folder = new File(folderPath);
+        GitSimpleHandler handler = new GitSimpleHandler(project, folder.getParentFile(), GitCommand.CLONE);
+        handler.addParameters(repositoryUrl, folder.getName());
         handler.runInCurrentThread(null);
         return true;
     }
