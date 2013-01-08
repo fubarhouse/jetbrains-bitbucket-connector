@@ -307,7 +307,8 @@ public class BitbucketUtil {
 
     public static void share(final Project project, final VirtualFile root, final String name, final String description, final boolean ssh, final boolean git, final VcsHandler vcsHandler) {
         final RepositoryInfo[] repo = new RepositoryInfo[1];
-        executeWithProgressSynchronously(project, BitbucketBundle.message("push-bitbucket", name), new Runnable() {
+        final String title = BitbucketBundle.message("push-bitbucket", name);
+        executeWithProgressSynchronously(project, title, new Runnable() {
             public void run() {
                 BitbucketSettings settings = BitbucketSettings.getInstance();
                 RepositoryInfo repository = createBitbucketRepository(settings.getLogin(), settings.getPassword(), name, description, true, git);
@@ -319,29 +320,39 @@ public class BitbucketUtil {
                 repo[0] = repository;
             }
         });
-        RepositoryInfo repository = repo[0];
+        final RepositoryInfo repository = repo[0];
         if (repository != null) {
             try {
-                String repositoryUrl = repository.getCheckoutUrl(ssh, true);
+                final String repositoryUrl = repository.getCheckoutUrl(ssh, true);
                 vcsHandler.setRepositoryDefaultUrl(project, root, repository.getCheckoutUrl(ssh, false));
 
-                if (!vcsHandler.push(project, root, repositoryUrl)) {
-                    Thread.sleep(30000);
-                    if (!vcsHandler.push(project, root, repositoryUrl)) {
-                        return;
+                new Task.Backgroundable(project, title, true) {
+                    public void run(@NotNull ProgressIndicator indicator) {
+                        if (!vcsHandler.push(project, root, repositoryUrl)) {
+                            return;
+                        }
+
+                        SwingUtilities.invokeLater(new Runnable() {
+                            public void run() {
+                                showPushedDialog(project, name, repository);
+                            }
+                        });
                     }
-                }
+                }.queue();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-            try {
-                HtmlMessageDialog dialog = new HtmlMessageDialog(project, BitbucketBundle.message("project-shared", name, repository.getCheckoutUrl()), BitbucketBundle.message("share-project-on-bitbucket"));
-                dialog.show();
-            } catch (URIException e) {
-                Messages.showErrorDialog(project, e.getMessage(), BitbucketBundle.message("url-encode-err"));
-            }
         } else {
             Messages.showErrorDialog(project, BitbucketBundle.message("push-err"), BitbucketBundle.message("share-project-on-bitbucket"));
+        }
+    }
+
+    private static void showPushedDialog(Project project, String name, RepositoryInfo repository) {
+        try {
+            HtmlMessageDialog dialog = new HtmlMessageDialog(project, BitbucketBundle.message("project-shared", name, repository.getCheckoutUrl()), BitbucketBundle.message("share-project-on-bitbucket"));
+            dialog.show();
+        } catch (URIException e) {
+            Messages.showErrorDialog(project, e.getMessage(), BitbucketBundle.message("url-encode-err"));
         }
     }
 

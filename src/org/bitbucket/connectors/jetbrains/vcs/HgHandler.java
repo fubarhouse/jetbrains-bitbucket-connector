@@ -68,10 +68,25 @@ public class HgHandler implements VcsHandler {
     }
 
     public boolean initRepository(final Project project, final VirtualFile root) {
+        final Boolean[] res = new Boolean[1];
         new HgInitCommand(project).execute(root, new Consumer<Boolean>() {
             public void consume(Boolean aBoolean) {
+                synchronized (res) {
+                    res[0] = Boolean.TRUE.equals(aBoolean);
+                    res.notify();
+                }
             }
         });
+
+        try {
+            synchronized (res) {
+                if (res[0] == null) {
+                    res.wait();
+                }
+            }
+        } catch (InterruptedException e) {
+            return false;
+        }
 
         final Exception[] exc = new Exception[1];
 
@@ -92,19 +107,7 @@ public class HgHandler implements VcsHandler {
         return exc[0] == null;
     }
 
-    public boolean push(final Project project, final VirtualFile root, final String repositoryUrl) {
-        final Boolean[] result = new Boolean[1];
-
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-            public void run() {
-                result[0] = doPush(project, root, repositoryUrl);
-            }
-        }, BitbucketBundle.message("push-bitbucket"), true, project);
-
-        return Boolean.TRUE.equals(result[0]);
-    }
-
-    private boolean doPush(Project project, VirtualFile root, String repositoryUrl) {
+    public boolean push(Project project, VirtualFile root, String repositoryUrl) {
         final Boolean[] res = new Boolean[1];
         new HgPushCommand(project, root, repositoryUrl).execute(new HgCommandResultHandler() {
             public void process(@Nullable HgCommandResult result) {
