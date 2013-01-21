@@ -1,12 +1,13 @@
 <project basedir="." default="dist">
 
-    <property name="idea.dir" value="/home/leha/java/idea-IC-107.105"/>
+    <property name="idea.dir" value="/opt/java/idea-IC-123.123"/>
     <property name="idea.lib" value="${idea.dir}/lib"/>
 
     <path id="javac2.classpath">
         <pathelement location="${idea.lib}/javac2.jar"/>
         <pathelement location="${idea.lib}/jdom.jar"/>
         <pathelement location="${idea.lib}/asm.jar"/>
+        <pathelement location="${idea.lib}/asm4-all.jar"/>
         <pathelement location="${idea.lib}/asm-commons.jar"/>
         <pathelement location="${idea.lib}/jgoodies-forms.jar"/>
     </path>
