@@ -362,6 +362,9 @@ public class BitbucketUtil {
             try {
                 Thread.sleep(3000);
                 r = getRepository(settings.getLogin(), settings.getPassword(), name);
+                if (r == null) {
+                    return false;
+                }
             } catch (InterruptedException e) {
                 return false;
             }
