@@ -24,6 +24,9 @@
                 <fileset dir="${idea.dir}/lib">
                     <include name="*.jar"/>
                 </fileset>
+                <fileset dir="${java.home}/lib">
+                    <include name="*.jar"/>
+                </fileset>
                 <fileset dir="${idea.dir}/plugins/hg4idea/lib">
                     <include name="hg4idea.jar"/>
                 </fileset>
