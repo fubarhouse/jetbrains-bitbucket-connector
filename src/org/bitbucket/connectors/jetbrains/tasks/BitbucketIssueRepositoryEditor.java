@@ -24,6 +24,7 @@ public class BitbucketIssueRepositoryEditor extends BaseRepositoryEditor<Bitbuck
 
     private JComboBox mySelectRepositoryComboBox;
 
+    private JPanel bitbucketCustomPanel;
 
     public BitbucketIssueRepositoryEditor(final Project project, final BitbucketIssueRepository repository,
                                           Consumer<BitbucketIssueRepository> changeListener) {
@@ -55,12 +56,17 @@ public class BitbucketIssueRepositoryEditor extends BaseRepositoryEditor<Bitbuck
 
     }
 
+    protected JComponent createCustomPanel() {
+        bitbucketCustomPanel = new JPanel();
+        return bitbucketCustomPanel;
+    }
+
     private boolean setupUI(Project project, BitbucketIssueRepository repository) {
         java.util.List<RepositoryInfo> repos = BitbucketUtil.getRepositories(project, false);
 
 
         if (repos == null || repos.size() == 0) {
-            myCustomPanel.add(new JLabel(BitbucketBundle.message("no-repos-available")), BorderLayout.CENTER);
+            bitbucketCustomPanel.add(new JLabel(BitbucketBundle.message("no-repos-available")), BorderLayout.CENTER);
             mySelectRepositoryComboBox = null;
             return true;
         }
@@ -97,8 +103,8 @@ public class BitbucketIssueRepositoryEditor extends BaseRepositoryEditor<Bitbuck
             }
         });
 
-        myCustomPanel.add(mySelectRepositoryComboBox, BorderLayout.CENTER);
-        myCustomLabel.add(new JLabel(BitbucketBundle.message("select-task-repository"), SwingConstants.RIGHT) {
+        bitbucketCustomPanel.add(mySelectRepositoryComboBox, BorderLayout.CENTER);
+        bitbucketCustomPanel.add(new JLabel(BitbucketBundle.message("select-task-repository"), SwingConstants.RIGHT) {
             @Override
             public Dimension getPreferredSize() {
                 final Dimension oldSize = super.getPreferredSize();
@@ -107,7 +113,7 @@ public class BitbucketIssueRepositoryEditor extends BaseRepositoryEditor<Bitbuck
             }
         }, BorderLayout.CENTER);
 
-        myCustomPanel.doLayout();
+        bitbucketCustomPanel.doLayout();
         return false;
     }
 
