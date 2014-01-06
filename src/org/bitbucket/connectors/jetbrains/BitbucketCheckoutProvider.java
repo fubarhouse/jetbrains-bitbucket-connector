@@ -50,7 +50,7 @@ public class BitbucketCheckoutProvider implements CheckoutProvider {
         });
 
         String clonePath;
-        String lastProjectLocation = GeneralSettings.getInstance().getLastProjectLocation();
+        String lastProjectLocation = GeneralSettings.getInstance().getLastProjectCreationLocation();
         String userHome = SystemProperties.getUserHome();
         if (lastProjectLocation != null) {
             clonePath = lastProjectLocation.replace('/', File.separatorChar);

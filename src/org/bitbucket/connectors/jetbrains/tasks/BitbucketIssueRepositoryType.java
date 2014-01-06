@@ -52,12 +52,4 @@ public class BitbucketIssueRepositoryType extends BaseRepositoryType<BitbucketIs
     public EnumSet<TaskState> getPossibleTaskStates() {
         return EnumSet.of(TaskState.OPEN, TaskState.RESOLVED, TaskState.SUBMITTED);
     }
-
-    @Override
-    public boolean isSupported(int feature) {
-        if (feature == BASIC_HTTP_AUTHORIZATION)
-            return false;
-
-        return super.isSupported(feature);
-    }
 }

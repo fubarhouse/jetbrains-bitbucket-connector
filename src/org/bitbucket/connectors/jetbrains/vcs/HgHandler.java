@@ -69,10 +69,13 @@ public class HgHandler implements VcsHandler {
 
     public boolean initRepository(final Project project, final VirtualFile root) {
         final Boolean[] res = new Boolean[1];
-        new HgInitCommand(project).execute(root, new Consumer<Boolean>() {
-            public void consume(Boolean aBoolean) {
+
+        new HgInitCommand(project).execute(root, new HgCommandResultHandler() {
+
+            @Override
+            public void process(@Nullable HgCommandResult hgCommandResult) {
                 synchronized (res) {
-                    res[0] = Boolean.TRUE.equals(aBoolean);
+                    res[0] = hgCommandResult != null && hgCommandResult.getExitValue() == 0;
                     res.notify();
                 }
             }

@@ -1,12 +1,12 @@
 package org.bitbucket.connectors.jetbrains.ui;
 
-import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.ArrayUtil;
 import org.bitbucket.connectors.jetbrains.RepositoryInfo;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +36,7 @@ public class BitbucketCloneProjectPanel {
 
     public BitbucketCloneProjectPanel(BitbucketCloneProjectDialog dialog) {
         myDialog = dialog;
-        mySelectRepositoryComboBox.setRenderer(new ListCellRendererWrapper<RepositoryInfo>(mySelectRepositoryComboBox.getRenderer()) {
+        mySelectRepositoryComboBox.setRenderer(new ListCellRendererWrapper<RepositoryInfo>() {
             public void customize(JList list, RepositoryInfo value, int index, boolean selected, boolean cellHasFocus) {
                 setText(value.getOwner() + "/" + value.getName());
             }
@@ -105,7 +105,7 @@ public class BitbucketCloneProjectPanel {
         String preselectedFolderPath = myTextFieldWithBrowseButton.getText();
         VirtualFile preselectedFolder = LocalFileSystem.getInstance().findFileByPath(preselectedFolderPath);
 
-        VirtualFile[] files = FileChooser.chooseFiles(myPanel, fileChooserDescriptor, preselectedFolder);
+        VirtualFile[] files = FileChooser.chooseFiles(fileChooserDescriptor, myPanel, null, preselectedFolder);
         if (files.length > 0) {
             myTextFieldWithBrowseButton.setText(files[0].getPath());
         }

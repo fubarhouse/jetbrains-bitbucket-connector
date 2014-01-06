@@ -68,7 +68,7 @@ public class GitHandler implements VcsHandler {
         }
         GitLineHandler h = new GitLineHandler(project, root, GitCommand.ADD);
         h.addParameters(".");
-        h.setNoSSH(true);
+        //h.setNoSSH(true);
         GitHandlerUtil.doSynchronously(h, BitbucketBundle.message("create-local-repository"), BitbucketBundle.message("share-project-on-bitbucket"));
         if (!h.errors().isEmpty()) {
             return false;
@@ -76,7 +76,7 @@ public class GitHandler implements VcsHandler {
 
         h = new GitLineHandler(project, root, GitCommand.COMMIT);
         h.addParameters("-m", BitbucketBundle.message("initial-rev-msg"));
-        h.setNoSSH(true);
+        //h.setNoSSH(true);
         GitHandlerUtil.doSynchronously(h, BitbucketBundle.message("create-local-repository"), BitbucketBundle.message("share-project-on-bitbucket"));
         return h.errors().isEmpty();
     }
@@ -89,7 +89,7 @@ public class GitHandler implements VcsHandler {
         GitSimpleHandler handler = new GitSimpleHandler(project, root, cmd);
         handler.addParameters(params);
         handler.setSilent(true);
-        handler.setNoSSH(true);
+        //handler.setNoSSH(true);
         try {
             handler.run();
             if (handler.getExitCode() != 0) {

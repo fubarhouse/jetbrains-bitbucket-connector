@@ -1,6 +1,6 @@
 package org.bitbucket.connectors.jetbrains.tasks;
 
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.config.BaseRepositoryEditor;
@@ -75,7 +75,7 @@ public class BitbucketIssueRepositoryEditor extends BaseRepositoryEditor<Bitbuck
         mySelectRepositoryComboBox = new JComboBox(ArrayUtil.toObjectArray(repos));
 
         mySelectRepositoryComboBox
-                .setRenderer(new ListCellRendererWrapper<RepositoryInfo>(mySelectRepositoryComboBox.getRenderer()) {
+                .setRenderer(new ListCellRendererWrapper<RepositoryInfo>() {
                     public void customize(JList list, RepositoryInfo value, int index, boolean selected,
                                           boolean cellHasFocus) {
                         if (value == null) return;

@@ -246,7 +246,7 @@ public class BitbucketUtil {
         descriptor.setTitle(BitbucketBundle.message("ssh-key-dialog-title"));
         descriptor.setDescription(BitbucketBundle.message("ssh-key-dialog-desc"));
 
-        VirtualFile[] files = FileChooser.chooseFiles(parentComponent, descriptor, root);
+        VirtualFile[] files = FileChooser.chooseFiles(descriptor, parentComponent, null, root);
         if (files.length == 0) {
             return null;
         }
