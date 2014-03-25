@@ -1,16 +1,11 @@
 package org.bitbucket.connectors.jetbrains;
 
 import com.intellij.ide.GeneralSettings;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
-import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.util.SystemProperties;
 import org.apache.commons.httpclient.URIException;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketBundle;
@@ -22,8 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -77,12 +70,12 @@ public class BitbucketCheckoutProvider implements CheckoutProvider {
 
         String projectName = checkoutDialog.getProjectName();
         if (!StringUtil.isEmpty(projectName)) {
-            folder = new File(folder, projectName);
-            if (!folder.exists()) {
-                if (!folder.mkdir()) {
+            File destFolder = new File(folder, projectName);
+            if (!destFolder.exists()) {
+                if (!destFolder.mkdir()) {
                     return;
                 }
-            } else if (!folder.isDirectory()) {
+            } else if (!destFolder.isDirectory()) {
                 return;
             }
         }
@@ -91,60 +84,21 @@ public class BitbucketCheckoutProvider implements CheckoutProvider {
 
         try {
             String repositoryUrl;
-            boolean git;
+            boolean isGit;
             if (repository != null) {
                 repositoryUrl = repository.getCheckoutUrl();
-                git = repository.isGit();
+                isGit = repository.isGit();
             } else {
                 repositoryUrl = checkoutDialog.getRepositoryUrl();
                 if (BitbucketUtil.isHttpUrl(repositoryUrl)) {
                     repositoryUrl = RepositoryInfo.addPassword(repositoryUrl, false);
                 }
-                git = GitHandler.isGitRepository(repositoryUrl);
+                isGit = GitHandler.isGitRepository(repositoryUrl);
             }
-            checkout(project, repositoryUrl, folder.getPath(), git, listener);
+            final VcsHandler vcsHandler = isGit ? new GitHandler() : new HgHandler();
+            vcsHandler.checkout(project, repositoryUrl, listener, checkoutDialog.getSelectedPath(), projectName);
         } catch (URIException e) {
             Messages.showErrorDialog(project, e.getMessage(), BitbucketBundle.message("url-encode-err"));
-        }
-    }
-
-    private void checkout(final Project project, final String repositoryUrl, final String folder, final boolean git, final Listener listener) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-                FileDocumentManager.getInstance().saveAllDocuments();
-            }
-        });
-
-        new Task.Backgroundable(project, BitbucketBundle.message("checkouting"), true) {
-            public void run(@NotNull ProgressIndicator progressIndicator) {
-                final VcsHandler vcsHandler = git ? new GitHandler() : new HgHandler();
-                if (vcsHandler.checkout(project, folder, repositoryUrl)) {
-                    ApplicationManager.getApplication().invokeLater(new Runnable() {
-                        public void run() {
-                            if (listener != null) {
-                                directoryCheckedOut(listener, new File(folder), vcsHandler.getVcs(project).getKeyInstanceMethod());
-                                listener.checkoutCompleted();
-                            }
-                        }
-                    });
-                }
-            }
-        }.queue();
-    }
-
-    private void directoryCheckedOut(Listener listener, File folder, VcsKey vcsKey) {
-        for (Method m: listener.getClass().getDeclaredMethods()) {
-            if ("directoryCheckedOut".equals(m.getName())) {
-                Object[] params = m.getParameterTypes().length == 2 ?
-                        new Object[] { folder, vcsKey } : // new API
-                        new Object[] { folder }; // old API
-                try {
-                    m.invoke(listener, params);
-                    return;
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
         }
     }
 

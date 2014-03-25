@@ -2,6 +2,7 @@ package org.bitbucket.connectors.jetbrains.vcs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -12,7 +13,7 @@ import java.io.IOException;
  * Time: 11:34:00 AM
  */
 public interface VcsHandler {
-    boolean checkout(Project project, String folder, String repositoryUrl);
+    void checkout(Project project, String repositoryUrl, CheckoutProvider.Listener listener, String destFolder, String projectName);
 
     boolean push(Project project, VirtualFile root, String repositoryUrl);
 

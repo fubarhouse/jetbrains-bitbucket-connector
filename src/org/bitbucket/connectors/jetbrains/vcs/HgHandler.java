@@ -1,15 +1,20 @@
 package org.bitbucket.connectors.jetbrains.vcs;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.bitbucket.connectors.jetbrains.ProjectUtil;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketBundle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.*;
@@ -29,10 +34,36 @@ import java.util.List;
  */
 public class HgHandler implements VcsHandler {
 
-    public boolean checkout(Project project, String folder, String repositoryUrl) {
+    @Override
+    public void checkout(final Project project, final String repositoryUrl, final CheckoutProvider.Listener listener, String destFolder, String projectName) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+                FileDocumentManager.getInstance().saveAllDocuments();
+            }
+        });
+
+        final File folder = new File(destFolder, projectName);
+
+        new Task.Backgroundable(project, BitbucketBundle.message("checkouting"), true) {
+            public void run(@NotNull ProgressIndicator progressIndicator) {
+                if (HgHandler.this.checkout(project, folder, repositoryUrl)) {
+                    ApplicationManager.getApplication().invokeLater(new Runnable() {
+                        public void run() {
+                            if (listener != null) {
+                                listener.directoryCheckedOut(folder, HgHandler.this.getVcs(project).getKeyInstanceMethod());
+                                listener.checkoutCompleted();
+                            }
+                        }
+                    });
+                }
+            }
+        }.queue();
+    }
+
+    private boolean checkout(Project project, File folder, String repositoryUrl) {
         HgCloneCommand cmd = new HgCloneCommand(project);
         cmd.setRepositoryURL(repositoryUrl);
-        cmd.setDirectory(folder);
+        cmd.setDirectory(folder.getPath());
 
         HgCommandResult result = cmd.execute();
 
@@ -48,8 +79,7 @@ public class HgHandler implements VcsHandler {
         return true;
     }
 
-    private void deleteEmptyFolder(String folder) {
-        File f = new File(folder);
+    private void deleteEmptyFolder(File f) {
         if (f.exists() && f.isDirectory() && f.list().length == 0) {
             f.delete();
         }

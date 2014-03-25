@@ -1,15 +1,16 @@
 package org.bitbucket.connectors.jetbrains.vcs;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitHandlerUtil;
-import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.checkout.GitCheckoutProvider;
+import git4idea.commands.*;
 import org.bitbucket.connectors.jetbrains.BitbucketUtil;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketBundle;
 
@@ -24,12 +25,11 @@ import java.util.Collection;
  */
 public class GitHandler implements VcsHandler {
 
-    public boolean checkout(Project project, String folderPath, String repositoryUrl) {
-        File folder = new File(folderPath);
-        GitSimpleHandler handler = new GitSimpleHandler(project, folder.getParentFile(), GitCommand.CLONE);
-        handler.addParameters(repositoryUrl, folder.getName());
-        handler.runInCurrentThread(null);
-        return true;
+    @Override
+    public void checkout(Project project, String repositoryUrl, CheckoutProvider.Listener listener, String checkoutFolder, String projectName) {
+        Git git = ServiceManager.getService(Git.class);
+        final VirtualFile destinationParent = LocalFileSystem.getInstance().findFileByIoFile(new File(checkoutFolder));
+        GitCheckoutProvider.clone(project, git, listener, destinationParent, repositoryUrl, projectName, checkoutFolder);
     }
 
     public static boolean isGitRepository(String url) {

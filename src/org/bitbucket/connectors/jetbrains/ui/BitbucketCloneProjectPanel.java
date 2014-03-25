@@ -150,6 +150,7 @@ public class BitbucketCloneProjectPanel {
     }
 
     public String getRepositoryUrl() {
-        return myRepositoryUrlRadioButton.isSelected() ? myRepositoryUrlField.getText() : null;
+        String text = myRepositoryUrlRadioButton.isSelected() ? myRepositoryUrlField.getText() : null;
+        return (text != null) ? text.trim() : null;
     }
 }
