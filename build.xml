@@ -1,0 +1,76 @@
+<project basedir="." default="dist">
+
+    <property name="idea.dir" value="/opt/java/idea-IC-123.123"/>
+    <property name="idea.lib" value="${idea.dir}/lib"/>
+
+    <path id="javac2.classpath">
+        <pathelement location="${idea.lib}/javac2.jar"/>
+        <pathelement location="${idea.lib}/jdom.jar"/>
+        <pathelement location="${idea.lib}/asm.jar"/>
+        <pathelement location="${idea.lib}/asm4-all.jar"/>
+        <pathelement location="${idea.lib}/asm-commons.jar"/>
+        <pathelement location="${idea.lib}/jgoodies-forms.jar"/>
+    </path>
+    <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="javac2.classpath"/>
+
+
+	<target name="dist">
+        <delete dir="build"/>
+        <mkdir dir="build"/>
+        <mkdir dir="build/classes"/>
+
+		<javac2 srcdir="src" destdir="build/classes" target="1.5">
+            <classpath>
+                <fileset dir="${idea.dir}/lib">
+                    <include name="*.jar"/>
+                </fileset>
+                <fileset dir="${java.home}/lib">
+                    <include name="*.jar"/>
+                </fileset>
+                <fileset dir="${idea.dir}/plugins/hg4idea/lib">
+                    <include name="hg4idea.jar"/>
+                </fileset>
+                <fileset dir="${idea.dir}/plugins/git4idea/lib">
+                    <include name="git4idea.jar"/>
+                </fileset>
+                <fileset dir="${basedir}/lib">
+                    <include name="*.jar"/>
+                </fileset>
+                <fileset dir="${idea.dir}/plugins/tasks/lib">
+                    <include name="tasks-api.jar"/>
+                    <include name="tasks-core.jar"/>
+                </fileset>
+            </classpath>
+        </javac2>
+
+        <jar destfile="build/bitbucket.jar">
+            <fileset dir="build/classes">
+                <include name="**/*"/>
+            </fileset>
+            <fileset dir="src">
+                <include name="**/*.properties"/>
+                <include name="**/*.png"/>
+            </fileset>
+            <fileset dir="images">
+                <include name="**/*.png"/>
+            </fileset>
+            <fileset dir=".">
+                <include name="META-INF/*"/>
+            </fileset>
+        </jar>
+
+        <mkdir dir="build/Bitbucket/lib"/>
+        <copy todir="build/Bitbucket/lib">
+            <fileset dir="lib">
+                <include name="*.jar"/>
+            </fileset>
+            <fileset dir="build">
+                <include name="*.jar"/>
+            </fileset>
+        </copy>
+
+        <zip basedir="build" destfile="build/bitbucket.zip">
+            <include name="Bitbucket/lib/*.jar"/>
+        </zip>
+	</target>
+</project>
