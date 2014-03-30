@@ -272,7 +272,30 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
 
     @Override
     public BaseRepository clone() {
-        return new BitbucketIssueRepository(this);
+        try {
+            return new BitbucketIssueRepository(this);
+        } catch (NoSuchMethodError err) {
+            // FIXME: failed to figure out the cause of NoSuchMethodError on PyCharm PC-133.881, performing manual clone
+            // https://bitbucket.org/dmitry_cherkas/jetbrains-bitbucket-connector/issue/2
+            BitbucketIssueRepository r = new BitbucketIssueRepository();
+
+            r.setRepositoryName(this.getRepositoryName());
+            r.setRepositoryOwner(this.getRepositoryOwner());
+
+            r.setCommitMessageFormat(this.getCommitMessageFormat());
+            r.setEncodedPassword(this.getEncodedPassword());
+            r.setLoginAnonymously(this.isLoginAnonymously());
+            r.setPassword(this.getPassword());
+            r.setRepositoryType(this.getRepositoryType());
+            r.setShared(this.isShared());
+            r.setShouldFormatCommitMessage(this.isShouldFormatCommitMessage());
+            r.setUrl(this.getUrl());
+            r.setUseHttpAuthentication(this.isUseHttpAuthentication());
+            r.setUseProxy(this.isUseProxy());
+            r.setUsername(this.getUsername());
+
+            return r;
+        }
     }
 
     @Nullable
