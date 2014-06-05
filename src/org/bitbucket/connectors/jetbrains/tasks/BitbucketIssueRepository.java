@@ -99,6 +99,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
 
         Element element =
                 BitbucketUtil.request(settings.getLogin(), settings.getPassword(), url, false, null, queryParameters);
+        if(element == null) { return null; }
 
         return element.getChild("issues").getChildren("resource");
     }
