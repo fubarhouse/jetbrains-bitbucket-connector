@@ -128,7 +128,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
         if (summary == null) {
             return null;
         }
-        final String description = element.getChildText("content");
+        final String description = element.getChildText("content").replace("_", "&#95;");
         final Ref<Date> created = new Ref<Date>();
         try {
             created.set(parseDate(element, "created_on"));
