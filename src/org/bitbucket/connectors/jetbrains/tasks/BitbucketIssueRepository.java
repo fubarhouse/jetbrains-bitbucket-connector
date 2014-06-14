@@ -22,7 +22,11 @@ import javax.swing.*;
 import java.lang.reflect.Method;
 import java.text.MessageFormat;
 import java.text.ParseException;
+
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -99,8 +103,74 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
 
         Element element =
                 BitbucketUtil.request(settings.getLogin(), settings.getPassword(), url, false, null, queryParameters);
+        if(element == null) { return null; }
 
         return element.getChild("issues").getChildren("resource");
+    }
+
+    private Comment[] getIssueComments(String issueUrl) {
+        final BitbucketSettings settings = BitbucketSettings.getInstance();
+        Element commentElement;
+
+        try {
+            commentElement = BitbucketUtil.request(settings.getLogin(), settings.getPassword(),
+                    issueUrl + "/comments", false, null, null);
+        } catch (Exception e) {
+            log.error("Unable to load comments for issue " + issueUrl, e);
+            return Comment.EMPTY_ARRAY;
+        }
+
+        List<Comment> comments = new ArrayList<Comment>();
+
+        for(Element el: commentElement.getChildren("resource")) {
+            final String text = el.getChildText("content");
+            final String author = el.getChild("author_info").getChildText("username");
+
+            final Ref<Date> updated = new Ref<Date>();
+            try {
+                updated.set(parseDate(el, "utc_updated_on"));
+            } catch (ParseException e) {
+                log.warn("invalid date: " + el.getChildText("utc_updated_on"));
+                updated.set(new Date(0L));
+            }
+
+            Comment c = new Comment() {
+                @Override
+                public String getText() {
+                    return text;
+                }
+
+                @Nullable
+                @Override
+                public String getAuthor() {
+                    return author;
+                }
+
+                @Nullable
+                @Override
+                public Date getDate() {
+                    return updated.get();
+                }
+
+                @Override
+                public String toString() {
+                    return "{ Comment:\ntext:" + getText() + "\nauthor:" + getAuthor() + "\ndate:" + getDate() + "}";
+                }
+            };
+            if(log.isDebugEnabled()) {
+                log.debug("loaded comment: " + c.toString());
+            }
+            comments.add(c);
+        }
+
+        Collections.sort(comments, new Comparator<Comment>() {
+            @Override
+            public int compare(Comment o1, Comment o2) {
+                return o1.getDate().compareTo(o2.getDate());
+            }
+        });
+
+        return comments.toArray(new Comment[comments.size()]);
     }
 
     TaskState mapState(String state) {
@@ -127,7 +197,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
         if (summary == null) {
             return null;
         }
-        final String description = element.getChildText("content");
+        final String description = element.getChildText("content").replace("_", "&#95;");
         final Ref<Date> created = new Ref<Date>();
         try {
             created.set(parseDate(element, "created_on"));
@@ -147,6 +217,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
         //  /1.0/repositories/sylvanaar2/lua-for-idea/issues/79
         final String issueUrl = element.getChildText("resource_uri").replace("/1.0/repositories", "").replace("/issues/", "/issue/");
 
+        final Comment[] comments = getIssueComments(element.getChildText("resource_uri").replace("/1.0", ""));
 
         return new LocalTaskImpl(new Task() {
 
@@ -188,9 +259,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
 
             @NotNull
             @Override
-            public Comment[] getComments() {
-                return new Comment[0];
-            }
+            public Comment[] getComments() { return comments; }
 
             @Override
             public Icon getIcon() {

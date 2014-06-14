@@ -1,6 +1,7 @@
 package org.bitbucket.connectors.jetbrains;
 
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -39,6 +40,9 @@ import java.util.*;
 import java.util.List;
 
 public class BitbucketUtil {
+    private static final Logger log =
+            Logger.getInstance("#org.bitbucket.connectors.jetbrains.tasks.BitbucketUtil");
+
     public static final String BITBUCKET = "Bitbucket";
     public static final String BITBUCKET_DN = "bitbucket.org";
     public static final String API_URL_BASE = "https://api." + BITBUCKET_DN + "/1.0";
@@ -90,6 +94,14 @@ public class BitbucketUtil {
             res = new GetMethod(url);
         }
         client.executeMethod(res);
+
+        if(res.getStatusCode() != HttpStatus.SC_OK) {
+            if(res.getStatusCode() != HttpStatus.SC_NOT_FOUND) {
+                log.warn("invalid status code " + res.getStatusCode() + " was returned for url: " + url);
+            }
+            return null;
+        }
+
         String s = res.getResponseBodyAsString();
         return new SAXBuilder(false).build(new StringReader(s)).getRootElement();
     }
