@@ -1,13 +1,8 @@
 package org.bitbucket.connectors.jetbrains.tasks;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Ref;
 import com.intellij.tasks.*;
-import com.intellij.tasks.impl.BaseRepository;
-import com.intellij.tasks.impl.BaseRepositoryImpl;
-import com.intellij.tasks.impl.LocalTaskImpl;
-import com.intellij.tasks.impl.TaskUtil;
-import com.intellij.tasks.pivotal.PivotalTrackerRepository;
+import com.intellij.tasks.impl.*;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -19,16 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.lang.reflect.Method;
 import java.text.MessageFormat;
-import java.text.ParseException;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 
 @Tag("Bitbucket")
@@ -123,50 +110,20 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
         List<Comment> comments = new ArrayList<Comment>();
 
         for(Element el: commentElement.getChildren("resource")) {
-            final String text = el.getChildText("content");
-            final String author = el.getChild("author_info").getChildText("username");
+            String text = el.getChildText("content");
+            String author = el.getChild("author_info").getChildText("username");
+            Date updated = parseDate(el, "utc_updated_on");
 
-            final Ref<Date> updated = new Ref<Date>();
-            try {
-                updated.set(parseDate(el, "utc_updated_on"));
-            } catch (ParseException e) {
-                log.warn("invalid date: " + el.getChildText("utc_updated_on"));
-                updated.set(new Date(0L));
-            }
-
-            Comment c = new Comment() {
-                @Override
-                public String getText() {
-                    return text;
-                }
-
-                @Nullable
-                @Override
-                public String getAuthor() {
-                    return author;
-                }
-
-                @Nullable
-                @Override
-                public Date getDate() {
-                    return updated.get();
-                }
-
-                @Override
-                public String toString() {
-                    return "{ Comment:\ntext:" + getText() + "\nauthor:" + getAuthor() + "\ndate:" + getDate() + "}";
-                }
-            };
-            if(log.isDebugEnabled()) {
-                log.debug("loaded comment: " + c.toString());
-            }
-            comments.add(c);
+            comments.add(new SimpleComment(updated, author, text));
         }
 
         Collections.sort(comments, new Comparator<Comment>() {
             @Override
             public int compare(Comment o1, Comment o2) {
-                return o1.getDate().compareTo(o2.getDate());
+                Date d1 = o1.getDate();
+                Date d2 = o2.getDate();
+
+                return (d1 != null) ? d1.compareTo(d2) : (d2 == null ? 0 : 1);
             }
         });
 
@@ -198,12 +155,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
             return null;
         }
         final String description = element.getChildText("content").replace("_", "&#95;");
-        final Ref<Date> created = new Ref<Date>();
-        try {
-            created.set(parseDate(element, "created_on"));
-        } catch (ParseException e) {
-            log.warn(e);
-        }
+        final Date created = parseDate(element, "created_on");
 
         final String kind = element.getChild("metadata").getChildText("kind");
         final TaskType taskType =
@@ -274,12 +226,12 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
 
             @Override
             public Date getUpdated() {
-                return created.get();
+                return created;
             }
 
             @Override
             public Date getCreated() {
-                return created.get();
+                return created;
             }
 
             @Override
@@ -299,29 +251,13 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
         });
     }
 
-    private static Date parseDate(final Element element, final String name) throws ParseException {
-        try {
-            Method parseDateMethod = getParseDateMethod();
-            if (parseDateMethod != null) {
-                return (Date) parseDateMethod.invoke(null, element, name);
-            } else { // fix for newer versions without PivotalTrackerRepository.parseDate() method
-                String val = element.getChildText(name);
-                return TaskUtil.parseDate(val);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+    private static Date parseDate(final Element element, final String name) {
+        String val = element.getChildText(name);
+        if(val != null) {
+            return TaskUtil.parseDate(val);
+        } else {
+            return null;
         }
-    }
-
-    private static Method getParseDateMethod() {
-        final Class[] PARAMETER_TYPES = new Class[] { Element.class, String.class };
-        for (Method method: PivotalTrackerRepository.class.getMethods()) {
-            if ("parseDate".equals(method.getName()) && Arrays.equals(PARAMETER_TYPES, method.getParameterTypes())) {
-                method.setAccessible(true);
-                return method;
-            }
-        }
-        return null;
     }
 
     //https://api.bitbucket.org/1.0/repositories/sylvanaar2/lua-for-idea/issues/1
