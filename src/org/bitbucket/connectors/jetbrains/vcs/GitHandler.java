@@ -1,6 +1,8 @@
 package org.bitbucket.connectors.jetbrains.vcs;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.CheckoutProvider;
@@ -11,6 +13,7 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.checkout.GitCheckoutProvider;
 import git4idea.commands.*;
+import git4idea.commands.GitHandlerUtil.GitLineHandlerListenerProgress;
 import org.bitbucket.connectors.jetbrains.BitbucketUtil;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketBundle;
 
@@ -45,7 +48,7 @@ public class GitHandler implements VcsHandler {
 
         GitLineHandler handler = new GitLineHandler(project, root, GitCommand.PUSH);
         handler.addParameters("origin", "master");
-        Collection<VcsException> err = GitHandlerUtil.doSynchronouslyWithExceptions(handler);
+        Collection<VcsException> err = doSynchronouslyWithExceptions(handler);
         return err.isEmpty();
     }
 
@@ -99,5 +102,18 @@ public class GitHandler implements VcsHandler {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Run synchronously using progress indicator, but collect exceptions instead of showing error dialog
+     *
+     * @param handler a handler to use
+     * @return the collection of exception collected during operation
+     */
+    public static Collection<VcsException> doSynchronouslyWithExceptions(final GitLineHandler handler) {
+        final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+        handler.addLineListener(new GitLineHandlerListenerProgress(progressIndicator, handler, null, false));
+        GitHandlerUtil.runInCurrentThread(handler, progressIndicator, false, null);
+        return handler.errors();
     }
 }

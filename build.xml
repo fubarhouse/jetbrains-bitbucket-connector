@@ -7,6 +7,7 @@
         <pathelement location="${idea.lib}/javac2.jar"/>
         <pathelement location="${idea.lib}/jdom.jar"/>
         <pathelement location="${idea.lib}/asm.jar"/>
+        <pathelement location="${idea.lib}/asm-all.jar"/>
         <pathelement location="${idea.lib}/asm4-all.jar"/>
         <pathelement location="${idea.lib}/asm-commons.jar"/>
         <pathelement location="${idea.lib}/jgoodies-forms.jar"/>
