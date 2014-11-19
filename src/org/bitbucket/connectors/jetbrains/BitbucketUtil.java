@@ -22,6 +22,8 @@ import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.PutMethod;
+import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketBundle;
 import org.bitbucket.connectors.jetbrains.ui.BitbucketLoginDialog;
 import org.bitbucket.connectors.jetbrains.ui.HtmlMessageDialog;
@@ -83,7 +85,7 @@ public class BitbucketUtil {
             res = new PostMethod(url);
             if (params != null) {
                 List<NameValuePair> pairs = new ArrayList<NameValuePair>();
-                for (Map.Entry<String, String> entry: params.entrySet()) {
+                for (Map.Entry<String, String> entry : params.entrySet()) {
                     pairs.add(new NameValuePair(entry.getKey(), entry.getValue()));
                 }
                 NameValuePair[] arr = new NameValuePair[pairs.size()];
@@ -95,8 +97,28 @@ public class BitbucketUtil {
         }
         client.executeMethod(res);
 
-        if(res.getStatusCode() != HttpStatus.SC_OK) {
-            if(res.getStatusCode() != HttpStatus.SC_NOT_FOUND) {
+        if (res.getStatusCode() != HttpStatus.SC_OK) {
+            if (res.getStatusCode() != HttpStatus.SC_NOT_FOUND) {
+                log.warn("invalid status code " + res.getStatusCode() + " was returned for url: " + url);
+            }
+            return null;
+        }
+
+        String s = res.getResponseBodyAsString();
+        return new SAXBuilder(false).build(new StringReader(s)).getRootElement();
+    }
+
+    public static Element putRequest(String username, String password, String url, @Nullable String query) throws IOException, JDOMException {
+        url = "https://api." + BITBUCKET_DN + "/1.0" + url + "?format=xml";
+
+        HttpClient client = getClient(username, password);
+        PutMethod res = new PutMethod(url);
+        final StringRequestEntity requestEntity = new StringRequestEntity(query, "application/x-www-form-urlencoded", "utf-8");
+        res.setRequestEntity(requestEntity);
+        client.executeMethod(res);
+
+        if (res.getStatusCode() != HttpStatus.SC_OK) {
+            if (res.getStatusCode() != HttpStatus.SC_NOT_FOUND) {
                 log.warn("invalid status code " + res.getStatusCode() + " was returned for url: " + url);
             }
             return null;
@@ -182,8 +204,7 @@ public class BitbucketUtil {
                     return testConnection(settings.getLogin(), settings.getPassword());
                 }
             });
-        }
-        catch (CancelledException e) {
+        } catch (CancelledException e) {
             return false;
         }
 
@@ -199,8 +220,7 @@ public class BitbucketUtil {
             Element element = request(login, password, "/emails/", false, null);
             List<Element> children = element.getChildren();
             return children.size() > 0 && children.get(0).getChildren().size() > 0;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             // Ignore
         }
         return false;
@@ -230,7 +250,6 @@ public class BitbucketUtil {
      * @param project
      * @param login
      * @param password
-     *
      * @return true if uploaded successfully, false on upload error, null on cancel
      */
     public static Boolean addSshKey(final Project project, final Component parentComponent, final String login, final String password) {

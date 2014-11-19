@@ -49,7 +49,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
     }
 
     protected String myRepoOwner = null;
-    
+
     @Attribute("owner")
     public String getRepositoryOwner() {
         return myRepoOwner;
@@ -58,6 +58,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
     public void setRepositoryOwner(String s) {
         myRepoOwner = s;
     }
+
     @Override
     public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
         log.debug("getIssues: " + query);
@@ -90,7 +91,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
 
         Element element =
                 BitbucketUtil.request(settings.getLogin(), settings.getPassword(), url, false, null, queryParameters);
-        if(element == null) { return null; }
+        if (element == null) { return null; }
 
         return element.getChild("issues").getChildren("resource");
     }
@@ -109,7 +110,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
 
         List<Comment> comments = new ArrayList<Comment>();
 
-        for(Element el: commentElement.getChildren("resource")) {
+        for(Element el : commentElement.getChildren("resource")) {
             String text = el.getChildText("content");
             String author = el.getChild("author_info").getChildText("username");
             Date updated = parseDate(el, "utc_updated_on");
@@ -253,7 +254,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
 
     private static Date parseDate(final Element element, final String name) {
         String val = element.getChildText(name);
-        if(val != null) {
+        if (val != null) {
             return TaskUtil.parseDate(val);
         } else {
             return null;
@@ -305,6 +306,26 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
         }
     }
 
+    public void setTaskState(Task task, TaskState state) throws Exception {
+        String newState = null;
+        switch (state) {
+            case OPEN:
+            case REOPENED:
+                newState = "open";
+                break;
+            case RESOLVED:
+                newState = "resolved";
+                break;
+            default:
+                super.setTaskState(task, state);
+                return;
+        }
+        final String url = "/repositories/" + getRepositoryOwner() + "/"
+                + getRepositoryName() + "/issues/" + task.getId();
+        final BitbucketSettings settings = BitbucketSettings.getInstance();
+        Element request = BitbucketUtil.putRequest(settings.getLogin(), settings.getPassword(), url, "status=" + newState);
+    }
+
     @Nullable
     public String extractId(String taskName) {
         return taskName;
@@ -319,12 +340,12 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
     @Override
     public String toString() {
         return "BitbucketIssueRepository{" + "myRepoName='" + myRepoName + '\'' + ", myRepoOwner='" + myRepoOwner +
-               '\'' + '}';
+                '\'' + '}';
     }
 
     @Override
     public String getUrl() {
         return BitbucketUtil.API_URL_BASE + "/" + "repositories" + "/" + getRepositoryOwner() + "/" +
-               getRepositoryName();
+                getRepositoryName();
     }
 }
