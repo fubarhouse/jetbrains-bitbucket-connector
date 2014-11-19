@@ -306,6 +306,7 @@ public class BitbucketIssueRepository extends BaseRepositoryImpl {
         }
     }
 
+    @Override
     public void setTaskState(Task task, TaskState state) throws Exception {
         String newState = null;
         switch (state) {
